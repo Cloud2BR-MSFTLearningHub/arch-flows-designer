@@ -67,6 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
   const flowCategories = [
     ["Flow", "Flow control"],
+    ["Algorithm", "Algorithm control"],
     ["Work", "Work & decisions"],
     ["Information", "Information & handoffs"],
     ["Participants", "Participants & systems"]
@@ -74,6 +75,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const flowAssets = [
     { name: "Start", type: "Start", category: "Flow", icon: "flowstart" },
     { name: "End", type: "End", category: "Flow", icon: "flowend" },
+    { name: "Loop", type: "Loop", category: "Algorithm", icon: "flowloop" },
+    { name: "Merge", type: "Merge", category: "Algorithm", icon: "flowmerge" },
+    { name: "Subprocess", type: "Subprocess", category: "Algorithm", icon: "flowsubprocess" },
     { name: "Process", type: "Process", category: "Work", icon: "flowprocess" },
     { name: "Decision", type: "Decision", category: "Work", icon: "flowdecision" },
     { name: "Manual Task", type: "Task", category: "Work", icon: "flowtask" },
@@ -112,6 +116,29 @@ document.addEventListener("DOMContentLoaded", () => {
   function uid() { return `node-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
   function nodeById(id) { return diagram.nodes.find((node) => node.id === id); }
   function markDirty(message = "Unsaved changes") { status.textContent = message; }
+  function flowNode(label, type, icon, x, y) { return { id: uid(), label, type, icon, environment: "Production", notes: "", x, y }; }
+  const flowTemplates = {
+    algorithm: [
+      ["Start", "Start", "flowstart"], ["Read input", "Input or output", "flowinput"], ["More items?", "Decision", "flowdecision"], ["Process next item", "Loop", "flowloop"], ["End", "End", "flowend"]
+    ],
+    approval: [
+      ["Start", "Start", "flowstart"], ["Submit request", "Process", "flowprocess"], ["Review request", "Task", "flowtask"], ["Approved?", "Decision", "flowdecision"], ["End", "End", "flowend"]
+    ],
+    presentation: [
+      ["Start", "Start", "flowstart"], ["Set the context", "Process", "flowprocess"], ["Present the insight", "Document", "flowdocument"], ["Make the recommendation", "Approval", "flowapproval"], ["End", "End", "flowend"]
+    ]
+  };
+  function applyFlowTemplate(templateName) {
+    const template = flowTemplates[templateName];
+    if (!template) return;
+    const centerX = Math.max(44, stage.clientWidth / 2 - NODE_W / 2);
+    diagram = { version: 1, nodes: template.map(([label, type, icon], index) => flowNode(label, type, icon, centerX, 22 + index * 112)), edges: [] };
+    diagram.nodes.slice(0, -1).forEach((node, index) => diagram.edges.push({ id: uid(), from: node.id, to: diagram.nodes[index + 1].id }));
+    selectedId = diagram.nodes[0].id;
+    connectingFrom = null;
+    markDirty("Template loaded - edit any step");
+    render();
+  }
   function renderPalette(query = "") {
     const catalog = document.querySelector("#asset-catalog");
     const emptyMessage = document.querySelector("#catalog-empty");
@@ -250,6 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   stage.addEventListener("click", () => { if (!connectingFrom) { selectedId = null; render(); } });
   document.querySelector("#asset-search").addEventListener("input", (event) => renderPalette(event.target.value));
+  document.querySelectorAll("[data-template]").forEach((button) => button.addEventListener("click", () => applyFlowTemplate(button.dataset.template)));
   function arrangeDiagram() {
     if (!diagram.nodes.length) return;
 

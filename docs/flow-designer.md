@@ -21,6 +21,14 @@ Last updated: 2026-07-31
       <button class="tool-button tool-button--danger" type="button" id="clear-diagram">Clear</button>
     </div>
   </section>
+  <section class="template-shelf" aria-label="Flow templates">
+    <div class="template-shelf__label"><strong>Templates</strong><span>Start with a structure, then edit every step.</span></div>
+    <div class="template-list">
+      <button class="template-button" type="button" data-template="algorithm"><span>Algorithm</span><small>Input, loop, decision, output</small></button>
+      <button class="template-button" type="button" data-template="approval"><span>Approval process</span><small>Request, review, decision, notify</small></button>
+      <button class="template-button" type="button" data-template="presentation"><span>Presentation flow</span><small>Context, insight, recommendation, action</small></button>
+    </div>
+  </section>
   <div class="designer-workspace">
     <aside class="asset-panel" aria-label="Flowchart symbols">
       <label class="asset-search"><span>Search flow symbols</span><input id="asset-search" type="search" placeholder="Step or symbol"></label>

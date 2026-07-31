@@ -15,6 +15,9 @@ window.ArchIcons = (function () {
     flowapproval: { c: "#157A4A", s: `<circle cx="16" cy="16" r="8" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M12 16l2.6 2.6 5.2-5.6" fill="none" stroke="#fff" stroke-width="1.7"/>` },
     flowinput: { c: "#6E33C7", s: `<path d="M11 10h13l-3 12H8z" fill="none" stroke="#fff" stroke-width="1.6"/>` },
     flowdocument: { c: "#6E33C7", s: `<path d="M11 8h8l4 4v12H11z" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M19 8v4h4M13 17h7M13 20h5" stroke="#fff" stroke-width="1.3"/>` },
+    flowloop: { c: "#B5560E", s: `<path d="M21 12a7 7 0 10.4 7" fill="none" stroke="#fff" stroke-width="1.7"/><path d="M20 8v5h-5" fill="none" stroke="#fff" stroke-width="1.7" stroke-linejoin="round"/>` },
+    flowmerge: { c: "#0062B1", s: `<path d="M9 10l7 7 7-7M16 17v7" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>` },
+    flowsubprocess: { c: "#0062B1", s: `<rect x="8" y="10" width="16" height="12" rx="1.5" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M11 10v12M21 10v12" stroke="#fff" stroke-width="1.2"/>` },
     // Compute
     appservice: { c: "#0078D4", s: `<circle cx="16" cy="16" r="8" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M8 16h16M16 8c3 2.5 3 13.5 0 16M16 8c-3 2.5-3 13.5 0 16" fill="none" stroke="#fff" stroke-width="1.3"/>` },
     functions: { c: "#0062B1", s: `<path d="M18 7l-7 10h4l-2 8 8-11h-4z" fill="#fff"/>` },
