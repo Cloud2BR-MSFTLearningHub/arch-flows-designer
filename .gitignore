@@ -1,0 +1,15 @@
+# Python and MkDocs build artifacts
+__pycache__/
+*.py[cod]
+.venv/
+site/
+
+# JavaScript tooling
+node_modules/
+npm-debug.log*
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

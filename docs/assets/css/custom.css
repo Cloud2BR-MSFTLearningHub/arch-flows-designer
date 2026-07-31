@@ -1,0 +1,91 @@
+:root {
+  --brand-navy: #003366;
+  --brand-blue: #004a99;
+  --brand-blue-hover: #003874;
+}
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--brand-navy);
+  --md-primary-fg-color--light: var(--brand-blue);
+  --md-primary-fg-color--dark: #00264d;
+  --md-accent-fg-color: var(--brand-blue);
+}
+
+.md-header__button.md-logo img { border-radius: 50%; height: 2rem; width: 2rem; }
+.md-typeset { font-size: 0.8rem; }
+.md-typeset a { color: var(--brand-blue); }
+.md-typeset a:hover { color: var(--brand-blue-hover); }
+
+/* Keep large images within the content column */
+.md-typeset img { max-width: 100%; height: auto; }
+
+/* Make documentation tables easy to identify and scan */
+.md-typeset table:not([class]) { border: 1px solid #9fb9d2; border-collapse: separate; border-radius: 6px; border-spacing: 0; box-shadow: 0 1px 2px rgba(0, 51, 102, 0.06); overflow: hidden; }
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td { border-bottom: 1px solid #c2d4e5; border-right: 1px solid #c2d4e5; padding: 0.6em 0.75em; vertical-align: top; }
+.md-typeset table:not([class]) th { background: #eaf2fa; border-bottom: 2px solid #7fa5c8; color: #10253d; }
+.md-typeset table:not([class]) th:last-child,
+.md-typeset table:not([class]) td:last-child { border-right: 0; }
+.md-typeset table:not([class]) tr:last-child td { border-bottom: 0; }
+
+/*
+ * Standard org header block handling.
+ * The required header is: title, location, GitHub badge + org link, Last updated, separator.
+ * Hide the location and badge lines, show the Last updated line as a small grey
+ * caption, and hide the separator, so every page shows a clean last-updated date.
+ */
+.md-typeset h1 + p,
+.md-typeset h1 + p + p {
+  display: none;
+}
+.md-typeset h1 + p + p + p {
+  color: #6b7280;
+  font-size: 0.7rem;
+  margin: -0.4rem 0 0.6rem;
+}
+.md-typeset h1 + p + p + p + hr {
+  display: none;
+}
+
+/* Widen the layout so the center gets more space */
+@media screen and (min-width: 76.25em) { .md-grid { max-width: 96%; } }
+@media screen and (min-width: 90em) { .md-grid { max-width: 1800px; } }
+
+/* Left navigation: grey non-clickable section titles */
+.md-nav { font-size: 0.66rem; }
+.md-sidebar--primary .md-nav__item--section > .md-nav__link,
+.md-sidebar--primary .md-nav__item--section.md-nav__item--active > .md-nav__link,
+.md-nav--primary label.md-nav__link {
+  color: #8a94a6;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.md-nav__item .md-nav__link[href] { color: #3d4a5c; }
+.md-nav__link[href]:hover,
+.md-nav__link--active,
+.md-nav__item--active > .md-nav__link[href] { color: var(--brand-blue); }
+
+/* Home hub cards */
+.guide-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 1rem 0 2rem;
+}
+.guide-card,
+.guide-card:visited {
+  background: #fff;
+  border: 1px solid #dbe4ee;
+  border-top: 3px solid var(--brand-blue);
+  border-radius: 8px;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  min-height: 7rem;
+  padding: 1rem 1.05rem;
+  text-decoration: none;
+}
+.guide-card:hover { box-shadow: 0 7px 18px rgba(0, 51, 102, 0.12); color: inherit; }
+@media screen and (max-width: 44rem) { .guide-grid { grid-template-columns: 1fr; } }
