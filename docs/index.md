@@ -24,9 +24,8 @@ Last updated: 2026-07-31
   <div class="designer-workspace">
     <aside class="asset-panel" aria-label="Architecture assets">
       <label class="asset-search"><span>Search assets</span><input id="asset-search" type="search" placeholder="Service or asset"></label>
-      <div class="asset-category"><span>Azure compute</span><div id="compute-assets"></div></div>
-      <div class="asset-category"><span>Azure platform</span><div id="platform-assets"></div></div>
-      <div class="asset-category"><span>General assets</span><div id="general-assets"></div></div>
+      <div id="asset-catalog"></div>
+      <p class="asset-empty" id="catalog-empty" hidden>No assets match your search.</p>
       <p class="asset-hint">Select an asset to add it to the canvas.</p>
     </aside>
     <main class="diagram-stage" id="diagram-stage" aria-label="Diagram canvas">

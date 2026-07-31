@@ -113,8 +113,10 @@
 .tool-button--danger { background: transparent; border-color: #7198b9; color: #fff; }
 .tool-button--danger:hover { background: #6b1d1d; border-color: #f0b1b1; color: #fff; }
 .designer-workspace { background: #eaf2f8; display: grid; flex: 1; grid-template-columns: 190px minmax(620px, 1fr) 220px; min-height: 0; }
-.asset-panel, .inspector-panel { background: #fff; padding: .85rem; position: relative; z-index: 3; }
+.asset-panel, .inspector-panel { background: #fff; overflow-y: auto; padding: .85rem; position: relative; scrollbar-width: thin; scrollbar-color: #b7cbdd transparent; z-index: 3; }
 .asset-panel { border-right: 1px solid #cfdeea; }
+.asset-panel::-webkit-scrollbar, .inspector-panel::-webkit-scrollbar { width: 8px; }
+.asset-panel::-webkit-scrollbar-thumb, .inspector-panel::-webkit-scrollbar-thumb { background: #c2d4e5; border-radius: 8px; }
 .inspector-panel { border-left: 1px solid #cfdeea; }
 .asset-search { color: #53687b; display: block; font-size: .66rem; font-weight: 700; }
 .asset-search input, #node-form input, #node-form select, #node-form textarea { border: 1px solid #b8cad9; border-radius: 4px; box-sizing: border-box; color: #192d40; font: inherit; font-size: .72rem; margin-top: .28rem; outline-color: var(--brand-blue); padding: .48rem; width: 100%; }
@@ -122,7 +124,9 @@
 .asset-category > span { color: #587086; display: block; font-size: .59rem; font-weight: 800; letter-spacing: .05em; margin-bottom: .38rem; text-transform: uppercase; }
 .asset-button { align-items: center; background: transparent; border: 0; color: #23394d; cursor: pointer; display: flex; font: inherit; font-size: .69rem; gap: .45rem; padding: .36rem .2rem; text-align: left; width: 100%; }
 .asset-button:hover { background: #edf6fc; color: var(--brand-blue); }
-.asset-glyph { align-items: center; background: #e2f0fb; border: 1px solid #abd0ea; border-radius: 3px; color: #056dae; display: flex; font-size: .61rem; font-weight: 800; height: 21px; justify-content: center; width: 21px; }
+.asset-glyph { align-items: center; display: flex; flex: 0 0 22px; height: 22px; justify-content: center; width: 22px; }
+.asset-glyph svg, .node-icon svg { display: block; height: 100%; width: 100%; }
+.asset-empty { color: #8496a6; font-size: .66rem; margin: .6rem .2rem 0; }
 .asset-hint, .inspector-empty { color: #687b8d; font-size: .65rem; line-height: 1.5; }
 .diagram-stage { background-color: #f8fbfd; background-image: radial-gradient(#b9cfdf 1px, transparent 1px); background-size: 18px 18px; min-width: 0; overflow: hidden; position: relative; }
 .connection-layer { height: 100%; inset: 0; overflow: visible; pointer-events: none; position: absolute; width: 100%; z-index: 1; }
@@ -131,10 +135,10 @@
 .architecture-node:active { cursor: grabbing; }
 .architecture-node.is-selected { border: 2px solid #005a9c; box-shadow: 0 0 0 3px rgba(0, 90, 156, .16); }
 .architecture-node.is-connect-target { border-color: #16844b; box-shadow: 0 0 0 3px rgba(22, 132, 75, .18); }
-.node-icon { align-items: center; background: #e3f1fb; border-radius: 4px; color: #006ea9; display: flex; font-size: .67rem; font-weight: 800; height: 24px; justify-content: center; width: 24px; }
+.node-icon { align-items: center; display: flex; flex: 0 0 26px; height: 26px; justify-content: center; width: 26px; }
 .node-top { align-items: center; display: flex; gap: .4rem; }
 .node-label { color: #142b42; font-size: .7rem; font-weight: 800; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.node-meta { color: #688099; font-size: .56rem; margin: .48rem 0 0 1.95rem; text-transform: uppercase; }
+.node-meta { color: #688099; font-size: .56rem; margin: .48rem 0 0 2.05rem; text-transform: uppercase; }
 .canvas-empty { align-items: center; color: #7890a3; display: flex; flex-direction: column; font-size: .75rem; inset: 0; justify-content: center; pointer-events: none; position: absolute; text-align: center; }
 .canvas-empty strong { color: #3f5f77; font-size: .92rem; margin-bottom: .3rem; }
 .inspector-heading { align-items: center; border-bottom: 1px solid #dce6ee; color: #476175; display: flex; font-size: .63rem; font-weight: 800; justify-content: space-between; letter-spacing: .06em; padding-bottom: .55rem; text-transform: uppercase; }

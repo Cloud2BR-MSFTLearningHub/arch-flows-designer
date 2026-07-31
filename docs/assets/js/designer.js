@@ -2,20 +2,68 @@ document.addEventListener("DOMContentLoaded", () => {
   const shell = document.querySelector("#designer");
   if (!shell) return;
 
+  const categories = [
+    ["Compute", "Azure compute"],
+    ["Networking", "Azure networking"],
+    ["Data", "Azure data"],
+    ["Integration", "Azure integration"],
+    ["Security", "Security & identity"],
+    ["AI", "AI & machine learning"],
+    ["Monitoring", "Monitoring"],
+    ["General", "General assets"],
+    ["Structure", "Boundaries & scope"]
+  ];
   const assets = [
-    { name: "App Service", type: "Compute", group: "compute-assets", glyph: "AS" },
-    { name: "Azure Functions", type: "Compute", group: "compute-assets", glyph: "Fn" },
-    { name: "AKS", type: "Compute", group: "compute-assets", glyph: "AK" },
-    { name: "Virtual Machine", type: "Compute", group: "compute-assets", glyph: "VM" },
-    { name: "API Management", type: "Integration", group: "platform-assets", glyph: "AP" },
-    { name: "Azure SQL", type: "Data", group: "platform-assets", glyph: "SQL" },
-    { name: "Storage Account", type: "Data", group: "platform-assets", glyph: "ST" },
-    { name: "Service Bus", type: "Integration", group: "platform-assets", glyph: "SB" },
-    { name: "Key Vault", type: "Security", group: "platform-assets", glyph: "KV" },
-    { name: "User", type: "External", group: "general-assets", glyph: "US" },
-    { name: "Internet", type: "External", group: "general-assets", glyph: "IN" },
-    { name: "On-premises", type: "External", group: "general-assets", glyph: "OP" },
-    { name: "Trust Boundary", type: "Container", group: "general-assets", glyph: "TB" }
+    { name: "App Service", type: "Compute", category: "Compute", icon: "appservice" },
+    { name: "Function App", type: "Compute", category: "Compute", icon: "functions" },
+    { name: "AKS", type: "Compute", category: "Compute", icon: "aks" },
+    { name: "Container Apps", type: "Compute", category: "Compute", icon: "containerapps" },
+    { name: "Virtual Machine", type: "Compute", category: "Compute", icon: "vm" },
+    { name: "VM Scale Set", type: "Compute", category: "Compute", icon: "vmss" },
+    { name: "Virtual Network", type: "Networking", category: "Networking", icon: "vnet" },
+    { name: "Load Balancer", type: "Networking", category: "Networking", icon: "loadbalancer" },
+    { name: "Application Gateway", type: "Networking", category: "Networking", icon: "appgateway" },
+    { name: "Front Door", type: "Networking", category: "Networking", icon: "frontdoor" },
+    { name: "Azure Firewall", type: "Networking", category: "Networking", icon: "firewall" },
+    { name: "Azure DNS", type: "Networking", category: "Networking", icon: "dns" },
+    { name: "Private Link", type: "Networking", category: "Networking", icon: "privatelink" },
+    { name: "Azure CDN", type: "Networking", category: "Networking", icon: "cdn" },
+    { name: "Azure SQL", type: "Data", category: "Data", icon: "sql" },
+    { name: "Cosmos DB", type: "Data", category: "Data", icon: "cosmos" },
+    { name: "Storage Account", type: "Data", category: "Data", icon: "storage" },
+    { name: "Blob Storage", type: "Data", category: "Data", icon: "blob" },
+    { name: "Cache for Redis", type: "Data", category: "Data", icon: "redis" },
+    { name: "Data Factory", type: "Data", category: "Data", icon: "datafactory" },
+    { name: "Synapse Analytics", type: "Data", category: "Data", icon: "synapse" },
+    { name: "API Management", type: "Integration", category: "Integration", icon: "apim" },
+    { name: "Service Bus", type: "Integration", category: "Integration", icon: "servicebus" },
+    { name: "Event Grid", type: "Integration", category: "Integration", icon: "eventgrid" },
+    { name: "Event Hubs", type: "Integration", category: "Integration", icon: "eventhubs" },
+    { name: "Logic Apps", type: "Integration", category: "Integration", icon: "logicapps" },
+    { name: "Key Vault", type: "Security", category: "Security", icon: "keyvault" },
+    { name: "Microsoft Entra ID", type: "Identity", category: "Security", icon: "entra" },
+    { name: "Defender for Cloud", type: "Security", category: "Security", icon: "defender" },
+    { name: "Azure OpenAI", type: "AI", category: "AI", icon: "openai" },
+    { name: "AI Search", type: "AI", category: "AI", icon: "aisearch" },
+    { name: "AI Foundry", type: "AI", category: "AI", icon: "aifoundry" },
+    { name: "Azure Monitor", type: "Monitoring", category: "Monitoring", icon: "monitor" },
+    { name: "Log Analytics", type: "Monitoring", category: "Monitoring", icon: "loganalytics" },
+    { name: "Application Insights", type: "Monitoring", category: "Monitoring", icon: "appinsights" },
+    { name: "User", type: "Actor", category: "General", icon: "user" },
+    { name: "User Group", type: "Actor", category: "General", icon: "users" },
+    { name: "Client App", type: "Client", category: "General", icon: "client" },
+    { name: "Mobile App", type: "Client", category: "General", icon: "mobile" },
+    { name: "Internet", type: "Network", category: "General", icon: "internet" },
+    { name: "On-premises", type: "Datacenter", category: "General", icon: "onprem" },
+    { name: "Database", type: "Data", category: "General", icon: "database" },
+    { name: "Server", type: "Compute", category: "General", icon: "server" },
+    { name: "Message Queue", type: "Integration", category: "General", icon: "queue" },
+    { name: "Kubernetes", type: "Compute", category: "General", icon: "kubernetes" },
+    { name: "External System", type: "External", category: "General", icon: "external" },
+    { name: "Trust Boundary", type: "Boundary", category: "Structure", icon: "boundary" },
+    { name: "Region", type: "Scope", category: "Structure", icon: "region" },
+    { name: "Resource Group", type: "Scope", category: "Structure", icon: "resourcegroup" },
+    { name: "Subscription", type: "Scope", category: "Structure", icon: "subscription" }
   ];
   const stage = document.querySelector("#diagram-stage");
   const lines = document.querySelector("#connection-layer");
@@ -37,19 +85,33 @@ document.addEventListener("DOMContentLoaded", () => {
   function nodeById(id) { return diagram.nodes.find((node) => node.id === id); }
   function markDirty(message = "Unsaved changes") { status.textContent = message; }
   function renderPalette(query = "") {
-    document.querySelectorAll("[id$='-assets']").forEach((container) => { container.innerHTML = ""; });
-    assets.filter((asset) => asset.name.toLowerCase().includes(query.toLowerCase())).forEach((asset) => {
-      const button = document.createElement("button");
-      button.className = "asset-button";
-      button.type = "button";
-      button.innerHTML = `<span class="asset-glyph">${asset.glyph}</span><span>${asset.name}</span>`;
-      button.addEventListener("click", () => addNode(asset));
-      document.querySelector(`#${asset.group}`).append(button);
+    const catalog = document.querySelector("#asset-catalog");
+    const emptyMessage = document.querySelector("#catalog-empty");
+    const term = query.trim().toLowerCase();
+    catalog.innerHTML = "";
+    categories.forEach(([key, label]) => {
+      const matches = assets.filter((asset) => asset.category === key && asset.name.toLowerCase().includes(term));
+      if (!matches.length) return;
+      const section = document.createElement("div");
+      section.className = "asset-category";
+      const title = document.createElement("span");
+      title.textContent = label;
+      section.append(title);
+      matches.forEach((asset) => {
+        const button = document.createElement("button");
+        button.className = "asset-button";
+        button.type = "button";
+        button.innerHTML = `<span class="asset-glyph">${window.ArchIcons.svg(asset.icon, 22)}</span><span>${asset.name}</span>`;
+        button.addEventListener("click", () => addNode(asset));
+        section.append(button);
+      });
+      catalog.append(section);
     });
+    if (emptyMessage) emptyMessage.hidden = catalog.children.length > 0;
   }
   function addNode(asset) {
     const offset = diagram.nodes.length * 20;
-    const node = { id: uid(), label: asset.name, type: asset.type, glyph: asset.glyph, environment: "Production", notes: "", x: 70 + (offset % 260), y: 80 + (offset % 180) };
+    const node = { id: uid(), label: asset.name, type: asset.type, icon: asset.icon, environment: "Production", notes: "", x: 70 + (offset % 260), y: 80 + (offset % 180) };
     diagram.nodes.push(node);
     selectedId = node.id;
     markDirty();
@@ -64,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
       element.dataset.nodeId = node.id;
       element.style.left = `${node.x}px`;
       element.style.top = `${node.y}px`;
-      element.innerHTML = `<div class="node-top"><span class="node-icon">${node.glyph}</span><span class="node-label">${escapeHtml(node.label)}</span></div><div class="node-meta">${escapeHtml(node.environment)}</div>`;
+      element.innerHTML = `<div class="node-top"><span class="node-icon">${window.ArchIcons.svg(node.icon, 26)}</span><span class="node-label">${escapeHtml(node.label)}</span></div><div class="node-meta">${escapeHtml(node.environment)}</div>`;
       element.addEventListener("pointerdown", beginDrag);
       element.addEventListener("click", selectNode);
       stage.append(element);
@@ -179,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#export-svg").addEventListener("click", () => {
     const width = Math.max(stage.clientWidth, 800); const height = Math.max(stage.clientHeight, 540);
     const edges = diagram.edges.map((edge) => { const a = nodeById(edge.from); const b = nodeById(edge.to); return a && b ? `<path d="M ${a.x + 142} ${a.y + 32} C ${a.x + 185} ${a.y + 32}, ${b.x - 43} ${b.y + 32}, ${b.x} ${b.y + 32}" fill="none" stroke="#2a6b9d" stroke-width="2"/>` : ""; }).join("");
-    const nodes = diagram.nodes.map((node) => `<g transform="translate(${node.x},${node.y})"><rect width="142" height="65" rx="5" fill="#fff" stroke="#8badc6"/><rect x="8" y="9" width="24" height="24" rx="4" fill="#e3f1fb"/><text x="20" y="25" text-anchor="middle" font-family="Arial" font-size="9" font-weight="700" fill="#006ea9">${escapeHtml(node.glyph)}</text><text x="40" y="24" font-family="Arial" font-size="11" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text><text x="40" y="50" font-family="Arial" font-size="8" fill="#688099">${escapeHtml(node.environment.toUpperCase())}</text></g>`).join("");
+    const nodes = diagram.nodes.map((node) => `<g transform="translate(${node.x},${node.y})"><rect width="142" height="65" rx="5" fill="#fff" stroke="#8badc6"/><svg x="8" y="9" width="26" height="26" viewBox="0 0 32 32">${window.ArchIcons.inner(node.icon)}</svg><text x="42" y="24" font-family="Arial" font-size="11" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text><text x="42" y="50" font-family="Arial" font-size="8" fill="#688099">${escapeHtml(node.environment.toUpperCase())}</text></g>`).join("");
     download("arch-flow-diagram.svg", `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#f8fbfd"/>${edges}${nodes}</svg>`, "image/svg+xml"); status.textContent = "SVG exported";
   });
   document.querySelector("#clear-diagram").addEventListener("click", () => { diagram = { version: 1, nodes: [], edges: [] }; selectedId = null; connectingFrom = null; markDirty("Canvas cleared"); render(); });
