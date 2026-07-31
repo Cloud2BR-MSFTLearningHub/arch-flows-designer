@@ -138,8 +138,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (emptyMessage) emptyMessage.hidden = catalog.children.length > 0;
   }
   function addNode(asset) {
-    const offset = diagram.nodes.length * 20;
-    const node = { id: uid(), label: asset.name, type: asset.type, icon: asset.icon, environment: "Production", notes: "", x: 70 + (offset % 260), y: 80 + (offset % 180) };
+    const offset = diagram.nodes.length;
+    const node = { id: uid(), label: asset.name, type: asset.type, icon: asset.icon, environment: "Production", notes: "", x: isFlowMode ? 90 + (offset % 3) * 170 : 70 + (offset * 20 % 260), y: isFlowMode ? 60 + Math.floor(offset / 3) * 150 : 80 + (offset * 20 % 180) };
     diagram.nodes.push(node);
     selectedId = node.id;
     markDirty();
@@ -166,19 +166,20 @@ document.addEventListener("DOMContentLoaded", () => {
   function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character]); }
   function renderConnections() {
     const bounds = stage.getBoundingClientRect();
-    lines.innerHTML = "";
+    lines.innerHTML = `<defs><marker id="flow-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M 0 0 L 8 4 L 0 8 z" fill="#2a6b9d"/></marker></defs>`;
     lines.setAttribute("viewBox", `0 0 ${bounds.width} ${bounds.height}`);
     diagram.edges.forEach((edge) => {
       const source = nodeById(edge.from);
       const target = nodeById(edge.to);
       if (!source || !target) return;
-      const startX = source.x + NODE_W;
-      const startY = source.y + NODE_H / 2;
-      const endX = target.x;
-      const endY = target.y + NODE_H / 2;
-      const bend = Math.max(35, Math.abs(endX - startX) / 2);
+      const startX = isFlowMode ? source.x + NODE_W / 2 : source.x + NODE_W;
+      const startY = isFlowMode ? source.y + NODE_H : source.y + NODE_H / 2;
+      const endX = isFlowMode ? target.x + NODE_W / 2 : target.x;
+      const endY = isFlowMode ? target.y : target.y + NODE_H / 2;
+      const bend = Math.max(35, isFlowMode ? Math.abs(endY - startY) / 2 : Math.abs(endX - startX) / 2);
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`);
+      path.setAttribute("d", isFlowMode ? `M ${startX} ${startY} C ${startX} ${startY + bend}, ${endX} ${endY - bend}, ${endX} ${endY}` : `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`);
+      path.setAttribute("marker-end", "url(#flow-arrow)");
       lines.append(path);
     });
   }
@@ -235,7 +236,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#connect-node").addEventListener("click", () => {
     if (!selectedId) return;
     connectingFrom = selectedId;
-    status.textContent = "Select the target asset";
+    status.textContent = isFlowMode ? "Select the next step" : "Select the target asset";
     render();
   });
   document.querySelector("#delete-node").addEventListener("click", () => {
@@ -293,8 +294,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const bounds = stage.getBoundingClientRect();
     const marginX = 44;
     const marginY = 36;
-    const columnGap = 92;
-    const rowGap = 34;
+    const columnGap = isFlowMode ? 54 : 92;
+    const rowGap = isFlowMode ? 62 : 34;
     columns.forEach((column, columnIndex) => {
       if (!column) return;
       // Place related nodes near the vertical midpoint of their upstream links.
@@ -309,8 +310,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const columnHeight = column.length * NODE_H + Math.max(0, column.length - 1) * rowGap;
       const startY = Math.max(marginY, (bounds.height - columnHeight) / 2);
       column.forEach((node, rowIndex) => {
-        node.x = marginX + columnIndex * (NODE_W + columnGap);
-        node.y = startY + rowIndex * (NODE_H + rowGap);
+        if (isFlowMode) {
+          const rowWidth = column.length * NODE_W + Math.max(0, column.length - 1) * columnGap;
+          node.x = Math.max(marginX, (bounds.width - rowWidth) / 2) + rowIndex * (NODE_W + columnGap);
+          node.y = marginY + columnIndex * (NODE_H + rowGap);
+        } else {
+          node.x = marginX + columnIndex * (NODE_W + columnGap);
+          node.y = startY + rowIndex * (NODE_H + rowGap);
+        }
       });
     });
     markDirty("Arranged by flow");
@@ -398,9 +405,19 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.querySelector("#export-svg").addEventListener("click", () => {
     const width = Math.max(stage.clientWidth, 800); const height = Math.max(stage.clientHeight, 540);
-    const edges = diagram.edges.map((edge) => { const a = nodeById(edge.from); const b = nodeById(edge.to); return a && b ? `<path d="M ${a.x + NODE_W} ${a.y + NODE_H / 2} C ${a.x + NODE_W + 40} ${a.y + NODE_H / 2}, ${b.x - 40} ${b.y + NODE_H / 2}, ${b.x} ${b.y + NODE_H / 2}" fill="none" stroke="#2a6b9d" stroke-width="2"/>` : ""; }).join("");
+    const edges = diagram.edges.map((edge) => {
+      const source = nodeById(edge.from); const target = nodeById(edge.to);
+      if (!source || !target) return "";
+      const startX = isFlowMode ? source.x + NODE_W / 2 : source.x + NODE_W;
+      const startY = isFlowMode ? source.y + NODE_H : source.y + NODE_H / 2;
+      const endX = isFlowMode ? target.x + NODE_W / 2 : target.x;
+      const endY = isFlowMode ? target.y : target.y + NODE_H / 2;
+      const bend = Math.max(35, isFlowMode ? Math.abs(endY - startY) / 2 : Math.abs(endX - startX) / 2);
+      const path = isFlowMode ? `M ${startX} ${startY} C ${startX} ${startY + bend}, ${endX} ${endY - bend}, ${endX} ${endY}` : `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`;
+      return `<path d="${path}" fill="none" stroke="#2a6b9d" stroke-width="2" marker-end="url(#arrowhead)"/>`;
+    }).join("");
     const nodes = diagram.nodes.map((node) => `<g transform="translate(${node.x},${node.y})"><rect width="${NODE_W}" height="${NODE_H}" rx="6" fill="#fff" stroke="#8badc6"/><svg x="${(NODE_W - 34) / 2}" y="8" width="34" height="34" viewBox="0 0 32 32">${window.ArchIcons.inner(node.icon)}</svg><text x="${NODE_W / 2}" y="58" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text></g>`).join("");
-    download("arch-flow-diagram.svg", `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#f8fbfd"/>${edges}${nodes}</svg>`, "image/svg+xml"); status.textContent = "SVG exported";
+    download("arch-flow-diagram.svg", `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M 0 0 L 8 4 L 0 8 z" fill="#2a6b9d"/></marker></defs><rect width="100%" height="100%" fill="#f8fbfd"/>${edges}${nodes}</svg>`, "image/svg+xml"); status.textContent = "SVG exported";
   });
   document.querySelector("#clear-diagram").addEventListener("click", () => { diagram = { version: 1, nodes: [], edges: [] }; selectedId = null; connectingFrom = null; markDirty("Canvas cleared"); render(); });
   window.addEventListener("resize", renderConnections);
