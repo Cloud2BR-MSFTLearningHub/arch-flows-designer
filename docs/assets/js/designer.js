@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let connectingFrom = null;
   let drag = null;
   const NODE_W = isFlowMode ? 136 : 120;
-  const NODE_H = isFlowMode ? 96 : 116;
+  const NODE_H = isFlowMode ? 72 : 116;
 
   function uid() { return `node-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
   function nodeById(id) { return diagram.nodes.find((node) => node.id === id); }
@@ -120,32 +120,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const flowTemplates = {
     algorithm: { nodes: [
       ["Start", "Start", "flowstart"], ["Read input", "Input or output", "flowinput"], ["More items?", "Decision", "flowdecision"], ["Process next item", "Process", "flowprocess"], ["Show result", "Input or output", "flowinput"], ["End", "End", "flowend"]
-    ], edges: [[0, 1], [1, 2], [2, 3, "Yes"], [2, 4, "No"], [3, 2, "Next item"], [4, 5]], positions: [[0, 8], [0, 92], [0, 176], [-160, 260], [160, 260], [160, 344]] },
+    ], edges: [[0, 1], [1, 2], [2, 3, "Yes"], [2, 4, "No"], [3, 2, "Next item"], [4, 5]] },
     approval: { nodes: [
       ["Start", "Start", "flowstart"], ["Submit request", "Process", "flowprocess"], ["Review request", "Task", "flowtask"], ["Approved?", "Decision", "flowdecision"], ["Notify requester", "Message", "queue"], ["End", "End", "flowend"]
-    ], edges: [[0, 1], [1, 2], [2, 3], [3, 4, "Yes / No"], [4, 5]], positions: [[0, 8], [0, 90], [0, 172], [0, 254], [0, 336], [0, 418]] },
+    ], edges: [[0, 1], [1, 2], [2, 3], [3, 4, "Yes / No"], [4, 5]] },
     presentation: { nodes: [
       ["Start", "Start", "flowstart"], ["Set the context", "Process", "flowprocess"], ["Present the insight", "Document", "flowdocument"], ["Make the recommendation", "Approval", "flowapproval"], ["End", "End", "flowend"]
-    ], edges: [[0, 1], [1, 2], [2, 3], [3, 4]], positions: [[0, 8], [0, 108], [0, 208], [0, 308], [0, 408]] },
+    ], edges: [[0, 1], [1, 2], [2, 3], [3, 4]] },
     incident: { nodes: [
       ["Alert received", "Start", "flowstart"], ["Triage incident", "Process", "flowprocess"], ["Service impacted?", "Decision", "flowdecision"], ["Contain and recover", "Subprocess", "flowsubprocess"], ["Record outcome", "Document", "flowdocument"], ["Close incident", "End", "flowend"]
-    ], edges: [[0, 1], [1, 2], [2, 3, "Yes"], [2, 4, "No"], [3, 4], [4, 5]], positions: [[0, 8], [0, 92], [0, 176], [-160, 260], [160, 260], [160, 344]] }
+    ], edges: [[0, 1], [1, 2], [2, 3, "Yes"], [2, 4, "No"], [3, 4], [4, 5]] }
   };
   function applyFlowTemplate(templateName) {
     const template = flowTemplates[templateName];
     if (!template) return;
-    const stageWidth = Math.max(stage.clientWidth, NODE_W + 16);
-    const centerX = stageWidth / 2 - NODE_W / 2;
-    diagram = { version: 1, nodes: template.nodes.map(([label, type, icon], index) => {
-      const [offsetX, y] = template.positions?.[index] || [0, 8 + index * 84];
-      const x = Math.min(stageWidth - NODE_W - 8, Math.max(8, centerX + offsetX));
-      return flowNode(label, type, icon, x, y);
-    }), edges: [] };
+    diagram = { version: 1, nodes: template.nodes.map(([label, type, icon]) => flowNode(label, type, icon, 8, 8)), edges: [] };
     template.edges.forEach(([from, to, label]) => diagram.edges.push({ id: uid(), from: diagram.nodes[from].id, to: diagram.nodes[to].id, label }));
     selectedId = diagram.nodes[0].id;
     connectingFrom = null;
-    markDirty("Template loaded - edit any step");
-    render();
+    arrangeDiagram("Template arranged - edit any step");
   }
   function renderPalette(query = "") {
     const catalog = document.querySelector("#asset-catalog");
@@ -209,27 +202,50 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     return shapes[type] || "process";
   }
+  function connectionGeometry(source, target) {
+    if (!isFlowMode) {
+      const startX = source.x + NODE_W;
+      const startY = source.y + NODE_H / 2;
+      const endX = target.x;
+      const endY = target.y + NODE_H / 2;
+      const bend = Math.max(35, Math.abs(endX - startX) / 2);
+      return { startX, startY, endX, endY, labelX: (startX + endX) / 2, labelY: (startY + endY) / 2 - 6, path: `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}` };
+    }
+
+    const sourceCenterX = source.x + NODE_W / 2;
+    const targetCenterX = target.x + NODE_W / 2;
+    if (target.y > source.y + NODE_H / 2) {
+      const startY = source.y + NODE_H;
+      const endY = target.y;
+      const bend = Math.max(2, (endY - startY) / 2);
+      return { startX: sourceCenterX, startY, endX: targetCenterX, endY, labelX: (sourceCenterX + targetCenterX) / 2, labelY: (startY + endY) / 2 - 6, path: `M ${sourceCenterX} ${startY} C ${sourceCenterX} ${startY + bend}, ${targetCenterX} ${endY - bend}, ${targetCenterX} ${endY}` };
+    }
+
+    const routeRight = Math.max(source.x, target.x) + NODE_W + 38 < stage.clientWidth;
+    const sourceX = routeRight ? source.x + NODE_W : source.x;
+    const targetX = routeRight ? target.x + NODE_W : target.x;
+    const routeX = routeRight ? Math.max(sourceX, targetX) + 34 : Math.max(8, Math.min(sourceX, targetX) - 34);
+    const startY = source.y + NODE_H / 2;
+    const endY = target.y + NODE_H / 2;
+    return { startX: sourceX, startY, endX: targetX, endY, labelX: routeX, labelY: (startY + endY) / 2 - 6, path: `M ${sourceX} ${startY} C ${routeX} ${startY}, ${routeX} ${endY}, ${targetX} ${endY}` };
+  }
   function renderConnections() {
     const bounds = stage.getBoundingClientRect();
-    lines.innerHTML = `<defs><marker id="flow-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M 0 0 L 8 4 L 0 8 z" fill="#2a6b9d"/></marker></defs>`;
+    lines.innerHTML = `<defs><marker id="flow-arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto" overflow="visible"><path d="M 0 0 L 8 4 L 0 8 z" fill="#2a6b9d"/></marker></defs>`;
     lines.setAttribute("viewBox", `0 0 ${bounds.width} ${bounds.height}`);
     diagram.edges.forEach((edge) => {
       const source = nodeById(edge.from);
       const target = nodeById(edge.to);
       if (!source || !target) return;
-      const startX = isFlowMode ? source.x + NODE_W / 2 : source.x + NODE_W;
-      const startY = isFlowMode ? source.y + NODE_H : source.y + NODE_H / 2;
-      const endX = isFlowMode ? target.x + NODE_W / 2 : target.x;
-      const endY = isFlowMode ? target.y : target.y + NODE_H / 2;
-      const bend = Math.max(35, isFlowMode ? Math.abs(endY - startY) / 2 : Math.abs(endX - startX) / 2);
+      const geometry = connectionGeometry(source, target);
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", isFlowMode ? `M ${startX} ${startY} C ${startX} ${startY + bend}, ${endX} ${endY - bend}, ${endX} ${endY}` : `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`);
+      path.setAttribute("d", geometry.path);
       path.setAttribute("marker-end", "url(#flow-arrow)");
       lines.append(path);
       if (edge.label) {
         const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        label.setAttribute("x", String((startX + endX) / 2));
-        label.setAttribute("y", String((startY + endY) / 2 - 6));
+        label.setAttribute("x", String(geometry.labelX));
+        label.setAttribute("y", String(geometry.labelY));
         label.setAttribute("text-anchor", "middle");
         label.textContent = edge.label;
         lines.append(label);
@@ -240,9 +256,12 @@ document.addEventListener("DOMContentLoaded", () => {
     event.stopPropagation();
     const nodeId = event.currentTarget.dataset.nodeId;
     if (connectingFrom && connectingFrom !== nodeId) {
-      diagram.edges.push({ id: uid(), from: connectingFrom, to: nodeId });
+      if (!diagram.edges.some((edge) => edge.from === connectingFrom && edge.to === nodeId)) diagram.edges.push({ id: uid(), from: connectingFrom, to: nodeId });
       connectingFrom = null;
       markDirty("Connection added");
+    } else if (connectingFrom === nodeId) {
+      connectingFrom = null;
+      markDirty("Connection cancelled");
     }
     selectedId = nodeId;
     render();
@@ -304,7 +323,7 @@ document.addEventListener("DOMContentLoaded", () => {
   stage.addEventListener("click", () => { if (!connectingFrom) { selectedId = null; render(); } });
   document.querySelector("#asset-search").addEventListener("input", (event) => renderPalette(event.target.value));
   document.querySelectorAll("[data-template]").forEach((button) => button.addEventListener("click", () => applyFlowTemplate(button.dataset.template)));
-  function arrangeDiagram() {
+  function arrangeDiagram(message) {
     if (!diagram.nodes.length) return;
 
     const nodeIds = new Set(diagram.nodes.map((node) => node.id));
@@ -316,26 +335,19 @@ document.addEventListener("DOMContentLoaded", () => {
       incoming.get(edge.to).push(edge.from);
     });
 
-    // Assign each node to the first column after all of its prerequisites.
-    const remaining = new Map(diagram.nodes.map((node) => [node.id, incoming.get(node.id).length]));
     const levels = new Map();
-    const queue = diagram.nodes.filter((node) => remaining.get(node.id) === 0).map((node) => node.id);
-    queue.forEach((nodeId) => levels.set(nodeId, 0));
-    for (let index = 0; index < queue.length; index += 1) {
-      const nodeId = queue[index];
-      outgoing.get(nodeId).forEach((targetId) => {
-        levels.set(targetId, Math.max(levels.get(targetId) || 0, (levels.get(nodeId) || 0) + 1));
-        remaining.set(targetId, remaining.get(targetId) - 1);
-        if (remaining.get(targetId) === 0) queue.push(targetId);
-      });
+    const roots = diagram.nodes.filter((node) => incoming.get(node.id).length === 0).map((node) => node.id);
+    const seeds = [...roots, ...diagram.nodes.map((node) => node.id)];
+    function assignLevel(nodeId, level, activePath) {
+      if (activePath.has(nodeId) || (levels.has(nodeId) && levels.get(nodeId) >= level)) return;
+      levels.set(nodeId, level);
+      const nextPath = new Set(activePath);
+      nextPath.add(nodeId);
+      outgoing.get(nodeId).forEach((targetId) => assignLevel(targetId, level + 1, nextPath));
     }
-
-    // Cyclic diagrams have no natural source; keep their connected nodes together.
-    diagram.nodes.forEach((node) => {
-      if (!levels.has(node.id)) {
-        const predecessorLevels = incoming.get(node.id).map((nodeId) => levels.get(nodeId)).filter((level) => level !== undefined);
-        levels.set(node.id, predecessorLevels.length ? Math.max(...predecessorLevels) + 1 : 0);
-      }
+    seeds.forEach((seedId) => {
+      if (levels.has(seedId)) return;
+      assignLevel(seedId, 0, new Set());
     });
 
     const columns = [];
@@ -347,13 +359,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const bounds = stage.getBoundingClientRect();
     const marginX = 44;
-    const marginY = isFlowMode ? 16 : 36;
+    const marginY = isFlowMode ? 8 : 36;
     const columnGap = isFlowMode ? 44 : 92;
     const rowGap = isFlowMode ? 62 : 34;
     const populatedColumns = columns.filter(Boolean).length;
     const availableFlowHeight = Math.max(NODE_H, bounds.height - marginY * 2 - NODE_H);
     const flowLevelGap = populatedColumns > 1
-      ? Math.max(76, Math.min(NODE_H + 34, availableFlowHeight / (populatedColumns - 1)))
+      ? Math.max(NODE_H + 4, Math.min(NODE_H + 36, availableFlowHeight / (populatedColumns - 1)))
       : 0;
     columns.forEach((column, columnIndex) => {
       if (!column) return;
@@ -370,9 +382,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const startY = Math.max(marginY, (bounds.height - columnHeight) / 2);
       column.forEach((node, rowIndex) => {
         if (isFlowMode) {
-          const rowWidth = column.length * NODE_W + Math.max(0, column.length - 1) * columnGap;
+          const usableWidth = Math.max(NODE_W, bounds.width - 16);
+          const adaptiveGap = column.length > 1 ? Math.max(16, Math.min(columnGap, (usableWidth - column.length * NODE_W) / (column.length - 1))) : 0;
+          const rowWidth = column.length * NODE_W + Math.max(0, column.length - 1) * adaptiveGap;
           const startX = Math.max(8, (bounds.width - rowWidth) / 2);
-          node.x = Math.min(bounds.width - NODE_W - 8, startX + rowIndex * (NODE_W + columnGap));
+          node.x = Math.max(8, Math.min(bounds.width - NODE_W - 8, startX + rowIndex * (NODE_W + adaptiveGap)));
           node.y = marginY + columnIndex * flowLevelGap;
         } else {
           node.x = marginX + columnIndex * (NODE_W + columnGap);
@@ -380,10 +394,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     });
-    markDirty(isFlowMode ? "Flow arranged" : "Architecture arranged");
+    markDirty(message || (isFlowMode ? "Flow arranged" : "Architecture arranged"));
     render();
   }
-  document.querySelector("#auto-layout").addEventListener("click", arrangeDiagram);
+  document.querySelector("#auto-layout").addEventListener("click", () => arrangeDiagram());
   function download(filename, content, type) {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([content], { type })); link.download = filename; link.click(); URL.revokeObjectURL(link.href);
@@ -477,14 +491,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const edges = diagram.edges.map((edge) => {
       const source = nodeById(edge.from); const target = nodeById(edge.to);
       if (!source || !target) return "";
-      const startX = isFlowMode ? source.x + NODE_W / 2 : source.x + NODE_W;
-      const startY = isFlowMode ? source.y + NODE_H : source.y + NODE_H / 2;
-      const endX = isFlowMode ? target.x + NODE_W / 2 : target.x;
-      const endY = isFlowMode ? target.y : target.y + NODE_H / 2;
-      const bend = Math.max(35, isFlowMode ? Math.abs(endY - startY) / 2 : Math.abs(endX - startX) / 2);
-      const path = isFlowMode ? `M ${startX} ${startY} C ${startX} ${startY + bend}, ${endX} ${endY - bend}, ${endX} ${endY}` : `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`;
-      const edgeLabel = edge.label ? `<text x="${(startX + endX) / 2}" y="${(startY + endY) / 2 - 6}" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#315976" stroke="#f8fbfd" stroke-width="4" paint-order="stroke">${escapeHtml(edge.label)}</text>` : "";
-      return `<path d="${path}" fill="none" stroke="#2a6b9d" stroke-width="2" marker-end="url(#arrowhead)"/>${edgeLabel}`;
+      const geometry = connectionGeometry(source, target);
+      const edgeLabel = edge.label ? `<text x="${geometry.labelX}" y="${geometry.labelY}" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#315976" stroke="#f8fbfd" stroke-width="4" paint-order="stroke">${escapeHtml(edge.label)}</text>` : "";
+      return `<path d="${geometry.path}" fill="none" stroke="#2a6b9d" stroke-width="2" marker-end="url(#arrowhead)"/>${edgeLabel}`;
     }).join("");
     const flowShapeSvg = (node) => {
       const shape = flowShapeFor(node.type);
@@ -504,7 +513,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const nodes = diagram.nodes.map((node) => isFlowMode
       ? `<g transform="translate(${node.x},${node.y})">${flowShapeSvg(node)}<text x="${NODE_W / 2}" y="${NODE_H / 2 + 4}" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text></g>`
       : `<g transform="translate(${node.x},${node.y})"><rect width="${NODE_W}" height="${NODE_H}" rx="6" fill="#fff" stroke="#8badc6"/><svg x="${(NODE_W - 34) / 2}" y="8" width="34" height="34" viewBox="0 0 32 32">${window.ArchIcons.inner(node.icon)}</svg><text x="${NODE_W / 2}" y="58" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text></g>`).join("");
-    download("arch-flow-diagram.svg", `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M 0 0 L 8 4 L 0 8 z" fill="#2a6b9d"/></marker></defs><rect width="100%" height="100%" fill="#f8fbfd"/>${edges}${nodes}</svg>`, "image/svg+xml"); status.textContent = "SVG exported";
+    download("arch-flow-diagram.svg", `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto" overflow="visible"><path d="M 0 0 L 8 4 L 0 8 z" fill="#2a6b9d"/></marker></defs><rect width="100%" height="100%" fill="#f8fbfd"/>${edges}${nodes}</svg>`, "image/svg+xml"); status.textContent = "SVG exported";
   });
   document.querySelector("#clear-diagram").addEventListener("click", () => { diagram = { version: 1, nodes: [], edges: [] }; selectedId = null; connectingFrom = null; markDirty("Canvas cleared"); render(); });
   window.addEventListener("resize", renderConnections);
