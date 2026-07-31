@@ -50,6 +50,14 @@ Last updated: 2026-07-31
         <label>Notes<textarea id="node-notes" rows="4" maxlength="180" placeholder="Optional context"></textarea></label>
         <button class="connect-button" id="connect-node" type="button">Connect from a point</button>
       </form>
+      <form id="edge-form" hidden>
+        <div class="edge-summary"><span id="edge-from-label"></span><span aria-hidden="true">&#8594;</span><span id="edge-to-label"></span></div>
+        <label>Start point<select id="edge-from-side"><option value="">Auto</option><option value="top">Top</option><option value="right">Right</option><option value="bottom">Bottom</option><option value="left">Left</option></select></label>
+        <label>End point<select id="edge-to-side"><option value="">Auto</option><option value="top">Top</option><option value="right">Right</option><option value="bottom">Bottom</option><option value="left">Left</option></select></label>
+        <label>Arrow label<input id="edge-label" type="text" maxlength="28" placeholder="Optional label"></label>
+        <button class="edge-action" id="reverse-edge" type="button">Reverse direction</button>
+        <button class="edge-action edge-action--delete" id="delete-edge" type="button">Delete arrow</button>
+      </form>
     </aside>
   </div>
   <footer class="designer-footer"><span>Cloud2BR Microsoft Cloud Sandbox - Learning Hub</span><span id="selection-status">0 symbols</span></footer>

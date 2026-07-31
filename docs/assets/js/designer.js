@@ -101,13 +101,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const status = document.querySelector("#diagram-status");
   const selectionStatus = document.querySelector("#selection-status");
   const form = document.querySelector("#node-form");
+  const edgeForm = document.querySelector("#edge-form");
   const inspectorEmpty = document.querySelector("#inspector-empty");
+  const deleteNodeButton = document.querySelector("#delete-node");
   const labelInput = document.querySelector("#node-label");
   const typeInput = document.querySelector("#node-type");
   const environmentInput = document.querySelector("#node-environment");
   const notesInput = document.querySelector("#node-notes");
+  const edgeFromSideInput = document.querySelector("#edge-from-side");
+  const edgeToSideInput = document.querySelector("#edge-to-side");
+  const edgeLabelInput = document.querySelector("#edge-label");
+  const edgeFromLabel = document.querySelector("#edge-from-label");
+  const edgeToLabel = document.querySelector("#edge-to-label");
   let diagram = { version: 1, nodes: [], edges: [] };
   let selectedId = null;
+  let selectedEdgeId = null;
   let connectingFrom = null;
   let connectingFromSide = null;
   let connectingTo = null;
@@ -117,6 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function uid() { return `node-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
   function nodeById(id) { return diagram.nodes.find((node) => node.id === id); }
+  function edgeById(id) { return diagram.edges.find((edge) => edge.id === id); }
   function markDirty(message = "Unsaved changes") { status.textContent = message; }
   function flowNode(label, type, icon, x, y) { return { id: uid(), label, type, icon, environment: "Production", notes: "", x, y }; }
   const flowTemplates = {
@@ -139,6 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
     diagram = { version: 1, nodes: template.nodes.map(([label, type, icon]) => flowNode(label, type, icon, 8, 8)), edges: [] };
     template.edges.forEach(([from, to, label]) => diagram.edges.push({ id: uid(), from: diagram.nodes[from].id, to: diagram.nodes[to].id, label, fromSide: "bottom", toSide: "top" }));
     selectedId = diagram.nodes[0].id;
+    selectedEdgeId = null;
     connectingFrom = null;
     connectingFromSide = null;
     connectingTo = null;
@@ -174,6 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const node = { id: uid(), label: asset.name, type: asset.type, icon: asset.icon, environment: "Production", notes: "", x: isFlowMode ? 90 + (offset % 3) * 170 : 70 + (offset * 20 % 260), y: isFlowMode ? 60 + Math.floor(offset / 3) * 150 : 80 + (offset * 20 % 180) };
     diagram.nodes.push(node);
     selectedId = node.id;
+    selectedEdgeId = null;
     markDirty();
     render();
   }
@@ -200,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     renderConnections();
     renderInspector();
-    selectionStatus.textContent = `${diagram.nodes.length} ${diagram.nodes.length === 1 ? unitNoun : `${unitNoun}s`}`;
+    selectionStatus.textContent = selectedEdgeId ? "1 arrow selected" : `${diagram.nodes.length} ${diagram.nodes.length === 1 ? unitNoun : `${unitNoun}s`}`;
   }
   function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character]); }
   function connectionPorts(node) {
@@ -295,6 +306,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderConnections() {
     const bounds = stage.getBoundingClientRect();
     lines.innerHTML = `<defs><marker id="flow-arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto" overflow="visible"><path d="M 0 0 L 8 4 L 0 8 z" fill="#2a6b9d"/></marker></defs>`;
+    lines.removeAttribute("aria-hidden");
+    lines.setAttribute("aria-label", "Diagram arrows");
     lines.setAttribute("viewBox", `0 0 ${bounds.width} ${bounds.height}`);
     diagram.edges.forEach((edge) => {
       const source = nodeById(edge.from);
@@ -304,12 +317,28 @@ document.addEventListener("DOMContentLoaded", () => {
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", geometry.path);
       path.setAttribute("marker-end", "url(#flow-arrow)");
+      path.setAttribute("class", `connection-path${edge.id === selectedEdgeId ? " is-selected" : ""}`);
       lines.append(path);
+      const hitPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      hitPath.setAttribute("d", geometry.path);
+      hitPath.setAttribute("class", "connection-hit");
+      hitPath.setAttribute("data-edge-id", edge.id);
+      hitPath.setAttribute("role", "button");
+      hitPath.setAttribute("tabindex", "0");
+      hitPath.setAttribute("aria-label", `Arrow from ${source.label} to ${target.label}`);
+      hitPath.addEventListener("click", selectEdge);
+      hitPath.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") selectEdge(event);
+      });
+      lines.append(hitPath);
       if (edge.label) {
         const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
         label.setAttribute("x", String(geometry.labelX));
         label.setAttribute("y", String(geometry.labelY));
         label.setAttribute("text-anchor", "middle");
+        label.setAttribute("class", "connection-label");
+        label.setAttribute("data-edge-id", edge.id);
+        label.addEventListener("click", selectEdge);
         label.textContent = edge.label;
         lines.append(label);
       }
@@ -318,6 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function selectNode(event) {
     event.stopPropagation();
     const nodeId = event.currentTarget.dataset.nodeId;
+    selectedEdgeId = null;
     if (connectingFrom && connectingFromSide && connectingFrom !== nodeId) {
       connectingTo = nodeId;
       selectedId = nodeId;
@@ -326,6 +356,17 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     selectedId = nodeId;
+    render();
+  }
+  function selectEdge(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    selectedEdgeId = event.currentTarget.dataset.edgeId;
+    selectedId = null;
+    connectingFrom = null;
+    connectingFromSide = null;
+    connectingTo = null;
+    markDirty("Arrow selected");
     render();
   }
   function selectConnectionPort(event) {
@@ -347,6 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
     connectingFromSide = side;
     connectingTo = null;
     selectedId = nodeId;
+    selectedEdgeId = null;
     status.textContent = "Select the target object";
     render();
   }
@@ -371,8 +413,18 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   function renderInspector() {
     const node = nodeById(selectedId);
+    const edge = edgeById(selectedEdgeId);
     form.hidden = !node;
-    inspectorEmpty.hidden = Boolean(node);
+    edgeForm.hidden = !edge;
+    inspectorEmpty.hidden = Boolean(node || edge);
+    deleteNodeButton.hidden = !node;
+    if (edge) {
+      edgeFromSideInput.value = edge.fromSide || "";
+      edgeToSideInput.value = edge.toSide || "";
+      edgeLabelInput.value = edge.label || "";
+      edgeFromLabel.textContent = nodeById(edge.from)?.label || "Unknown";
+      edgeToLabel.textContent = nodeById(edge.to)?.label || "Unknown";
+    }
     if (!node) return;
     labelInput.value = node.label;
     typeInput.value = node.type;
@@ -389,19 +441,59 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   }
   [labelInput, environmentInput, notesInput].forEach((input) => input.addEventListener("change", updateSelected));
+  function updateEdgeSide(field, value) {
+    const edge = edgeById(selectedEdgeId);
+    if (!edge) return;
+    if (!value) {
+      delete edge.fromSide;
+      delete edge.toSide;
+    } else {
+      edge[field] = value;
+      if (!edge.fromSide) edge.fromSide = isFlowMode ? "bottom" : "right";
+      if (!edge.toSide) edge.toSide = isFlowMode ? "top" : "left";
+    }
+    markDirty("Arrow realigned");
+    render();
+  }
+  edgeFromSideInput.addEventListener("change", (event) => updateEdgeSide("fromSide", event.target.value));
+  edgeToSideInput.addEventListener("change", (event) => updateEdgeSide("toSide", event.target.value));
+  edgeLabelInput.addEventListener("change", () => {
+    const edge = edgeById(selectedEdgeId);
+    if (!edge) return;
+    edge.label = edgeLabelInput.value.trim();
+    markDirty("Arrow label updated");
+    render();
+  });
+  document.querySelector("#reverse-edge").addEventListener("click", () => {
+    const edge = edgeById(selectedEdgeId);
+    if (!edge) return;
+    [edge.from, edge.to] = [edge.to, edge.from];
+    [edge.fromSide, edge.toSide] = [edge.toSide, edge.fromSide];
+    markDirty("Arrow reversed");
+    render();
+  });
+  document.querySelector("#delete-edge").addEventListener("click", () => {
+    if (!selectedEdgeId) return;
+    diagram.edges = diagram.edges.filter((edge) => edge.id !== selectedEdgeId);
+    selectedEdgeId = null;
+    markDirty("Arrow deleted");
+    render();
+  });
   document.querySelector("#connect-node").addEventListener("click", () => {
     if (!selectedId) return;
     connectingFrom = selectedId;
+    selectedEdgeId = null;
     connectingFromSide = null;
     connectingTo = null;
     status.textContent = "Choose where the arrow starts";
     render();
   });
-  document.querySelector("#delete-node").addEventListener("click", () => {
+  deleteNodeButton.addEventListener("click", () => {
     if (!selectedId) return;
     diagram.nodes = diagram.nodes.filter((node) => node.id !== selectedId);
     diagram.edges = diagram.edges.filter((edge) => edge.from !== selectedId && edge.to !== selectedId);
     selectedId = null;
+    selectedEdgeId = null;
     connectingFrom = null;
     connectingFromSide = null;
     connectingTo = null;
@@ -411,6 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
   stage.addEventListener("click", () => {
     const wasConnecting = Boolean(connectingFrom);
     selectedId = null;
+    selectedEdgeId = null;
     connectingFrom = null;
     connectingFromSide = null;
     connectingTo = null;
@@ -575,6 +668,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!Array.isArray(next.nodes) || !Array.isArray(next.edges)) throw new Error("Unsupported diagram structure");
       diagram = next;
       selectedId = null;
+      selectedEdgeId = null;
       connectingFrom = null;
       connectingFromSide = null;
       connectingTo = null;
@@ -613,7 +707,7 @@ document.addEventListener("DOMContentLoaded", () => {
       : `<g transform="translate(${node.x},${node.y})"><rect width="${NODE_W}" height="${NODE_H}" rx="6" fill="#fff" stroke="#8badc6"/><svg x="${(NODE_W - 34) / 2}" y="8" width="34" height="34" viewBox="0 0 32 32">${window.ArchIcons.inner(node.icon)}</svg><text x="${NODE_W / 2}" y="58" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text></g>`).join("");
     download("arch-flow-diagram.svg", `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto" overflow="visible"><path d="M 0 0 L 8 4 L 0 8 z" fill="#2a6b9d"/></marker></defs><rect width="100%" height="100%" fill="#f8fbfd"/>${edges}${nodes}</svg>`, "image/svg+xml"); status.textContent = "SVG exported";
   });
-  document.querySelector("#clear-diagram").addEventListener("click", () => { diagram = { version: 1, nodes: [], edges: [] }; selectedId = null; connectingFrom = null; connectingFromSide = null; connectingTo = null; markDirty("Canvas cleared"); render(); });
+  document.querySelector("#clear-diagram").addEventListener("click", () => { diagram = { version: 1, nodes: [], edges: [] }; selectedId = null; selectedEdgeId = null; connectingFrom = null; connectingFromSide = null; connectingTo = null; markDirty("Canvas cleared"); render(); });
   window.addEventListener("resize", renderConnections);
   renderPalette();
   render();
