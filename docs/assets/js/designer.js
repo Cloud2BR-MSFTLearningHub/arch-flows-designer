@@ -80,8 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedId = null;
   let connectingFrom = null;
   let drag = null;
-  const NODE_W = 108;
-  const NODE_H = 78;
+  const NODE_W = 120;
+  const NODE_H = 116;
 
   function uid() { return `node-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
   function nodeById(id) { return diagram.nodes.find((node) => node.id === id); }
@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
       element.dataset.nodeId = node.id;
       element.style.left = `${node.x}px`;
       element.style.top = `${node.y}px`;
-      element.innerHTML = `<span class="node-icon">${window.ArchIcons.svg(node.icon, 34)}</span><span class="node-label">${escapeHtml(node.label)}</span>`;
+      element.innerHTML = `<span class="node-icon">${window.ArchIcons.svg(node.icon, 48)}</span><span class="node-label">${escapeHtml(node.label)}</span>`;
       element.addEventListener("pointerdown", beginDrag);
       element.addEventListener("click", selectNode);
       stage.append(element);

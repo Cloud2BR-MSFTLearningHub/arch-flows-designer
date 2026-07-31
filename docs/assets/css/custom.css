@@ -131,12 +131,12 @@
 .diagram-stage { background-color: #f8fbfd; background-image: radial-gradient(#b9cfdf 1px, transparent 1px); background-size: 18px 18px; min-width: 0; overflow: hidden; position: relative; }
 .connection-layer { height: 100%; inset: 0; overflow: visible; pointer-events: none; position: absolute; width: 100%; z-index: 1; }
 .connection-layer path { fill: none; stroke: #2a6b9d; stroke-linecap: round; stroke-width: 2; }
-.architecture-node { align-items: center; background: #fff; border: 1px solid #8badc6; border-radius: 6px; box-shadow: 0 2px 5px rgba(0, 51, 102, .12); box-sizing: border-box; cursor: grab; display: flex; flex-direction: column; gap: .35rem; height: 78px; justify-content: center; padding: .5rem; position: absolute; text-align: center; user-select: none; width: 108px; z-index: 2; }
+.architecture-node { align-items: center; background: #fff; border: 1px solid #8badc6; border-radius: 6px; box-shadow: 0 2px 5px rgba(0, 51, 102, .12); box-sizing: border-box; cursor: grab; display: grid; grid-template-rows: 48px 34px; height: 116px; justify-items: center; padding: .75rem .5rem .6rem; position: absolute; text-align: center; user-select: none; width: 120px; z-index: 2; }
 .architecture-node:active { cursor: grabbing; }
 .architecture-node.is-selected { border: 2px solid #005a9c; box-shadow: 0 0 0 3px rgba(0, 90, 156, .16); }
 .architecture-node.is-connect-target { border-color: #16844b; box-shadow: 0 0 0 3px rgba(22, 132, 75, .18); }
-.node-icon { align-items: center; display: flex; height: 34px; justify-content: center; width: 34px; }
-.node-label { -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: #142b42; display: -webkit-box; font-size: .66rem; font-weight: 700; line-height: 1.2; overflow: hidden; }
+.node-icon { align-items: center; display: flex; height: 48px; justify-content: center; min-height: 48px; width: 48px; }
+.node-label { -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: #142b42; display: -webkit-box; font-size: .68rem; font-weight: 700; line-height: 1.2; max-width: 100%; overflow: hidden; }
 .canvas-empty { align-items: center; color: #7890a3; display: flex; flex-direction: column; font-size: .75rem; inset: 0; justify-content: center; pointer-events: none; position: absolute; text-align: center; }
 .canvas-empty strong { color: #3f5f77; font-size: .92rem; margin-bottom: .3rem; }
 .inspector-heading { align-items: center; border-bottom: 1px solid #dce6ee; color: #476175; display: flex; font-size: .63rem; font-weight: 800; justify-content: space-between; letter-spacing: .06em; padding-bottom: .55rem; text-transform: uppercase; }
