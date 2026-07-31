@@ -13,7 +13,7 @@ Last updated: 2026-07-31
   <section class="designer-toolbar" aria-label="Flow diagram commands">
     <div class="designer-title"><span class="designer-mark">FL</span><div><strong>Flow canvas</strong><span id="diagram-status">Draft</span></div></div>
     <div class="toolbar-actions">
-      <button class="tool-button" type="button" id="auto-layout">Arrange</button>
+      <button class="tool-button tool-button--arrange" type="button" id="auto-layout"><span class="arrange-icon" aria-hidden="true">&#8645;</span><span>Arrange flow</span></button>
       <button class="tool-button" type="button" id="export-svg">Export SVG</button>
       <button class="tool-button" type="button" id="save-diagram">Save JSON</button>
       <button class="tool-button" type="button" id="load-diagram">Open diagram</button>

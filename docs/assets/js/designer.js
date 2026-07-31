@@ -110,8 +110,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedId = null;
   let connectingFrom = null;
   let drag = null;
-  const NODE_W = 120;
-  const NODE_H = 116;
+  const NODE_W = isFlowMode ? 136 : 120;
+  const NODE_H = isFlowMode ? 96 : 116;
 
   function uid() { return `node-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
   function nodeById(id) { return diagram.nodes.find((node) => node.id === id); }
@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ], edges: [[0, 1], [1, 2], [2, 3, "Yes"], [2, 4, "No"], [3, 2, "Next item"], [4, 5]], positions: [[0, 8], [0, 92], [0, 176], [-160, 260], [160, 260], [160, 344]] },
     approval: { nodes: [
       ["Start", "Start", "flowstart"], ["Submit request", "Process", "flowprocess"], ["Review request", "Task", "flowtask"], ["Approved?", "Decision", "flowdecision"], ["Notify requester", "Message", "queue"], ["End", "End", "flowend"]
-    ], edges: [[0, 1], [1, 2], [2, 3], [3, 4, "Yes / No"], [4, 5]], positions: [[0, 8], [0, 92], [0, 176], [0, 260], [0, 344], [0, 428]] },
+    ], edges: [[0, 1], [1, 2], [2, 3], [3, 4, "Yes / No"], [4, 5]], positions: [[0, 8], [0, 90], [0, 172], [0, 254], [0, 336], [0, 418]] },
     presentation: { nodes: [
       ["Start", "Start", "flowstart"], ["Set the context", "Process", "flowprocess"], ["Present the insight", "Document", "flowdocument"], ["Make the recommendation", "Approval", "flowapproval"], ["End", "End", "flowend"]
     ], edges: [[0, 1], [1, 2], [2, 3], [3, 4]], positions: [[0, 8], [0, 108], [0, 208], [0, 308], [0, 408]] },
@@ -134,10 +134,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function applyFlowTemplate(templateName) {
     const template = flowTemplates[templateName];
     if (!template) return;
-    const centerX = Math.max(44, stage.clientWidth / 2 - NODE_W / 2);
+    const stageWidth = Math.max(stage.clientWidth, NODE_W + 16);
+    const centerX = stageWidth / 2 - NODE_W / 2;
     diagram = { version: 1, nodes: template.nodes.map(([label, type, icon], index) => {
       const [offsetX, y] = template.positions?.[index] || [0, 8 + index * 84];
-      return flowNode(label, type, icon, centerX + offsetX, y);
+      const x = Math.min(stageWidth - NODE_W - 8, Math.max(8, centerX + offsetX));
+      return flowNode(label, type, icon, x, y);
     }), edges: [] };
     template.edges.forEach(([from, to, label]) => diagram.edges.push({ id: uid(), from: diagram.nodes[from].id, to: diagram.nodes[to].id, label }));
     selectedId = diagram.nodes[0].id;
@@ -296,7 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
     diagram.edges = diagram.edges.filter((edge) => edge.from !== selectedId && edge.to !== selectedId);
     selectedId = null;
     connectingFrom = null;
-    markDirty("Asset deleted");
+    markDirty(`${isFlowMode ? "Symbol" : "Asset"} deleted`);
     render();
   });
   stage.addEventListener("click", () => { if (!connectingFrom) { selectedId = null; render(); } });
@@ -345,9 +347,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const bounds = stage.getBoundingClientRect();
     const marginX = 44;
-    const marginY = 36;
-    const columnGap = isFlowMode ? 54 : 92;
+    const marginY = isFlowMode ? 16 : 36;
+    const columnGap = isFlowMode ? 44 : 92;
     const rowGap = isFlowMode ? 62 : 34;
+    const populatedColumns = columns.filter(Boolean).length;
+    const availableFlowHeight = Math.max(NODE_H, bounds.height - marginY * 2 - NODE_H);
+    const flowLevelGap = populatedColumns > 1
+      ? Math.max(76, Math.min(NODE_H + 34, availableFlowHeight / (populatedColumns - 1)))
+      : 0;
     columns.forEach((column, columnIndex) => {
       if (!column) return;
       // Place related nodes near the vertical midpoint of their upstream links.
@@ -364,15 +371,16 @@ document.addEventListener("DOMContentLoaded", () => {
       column.forEach((node, rowIndex) => {
         if (isFlowMode) {
           const rowWidth = column.length * NODE_W + Math.max(0, column.length - 1) * columnGap;
-          node.x = Math.max(marginX, (bounds.width - rowWidth) / 2) + rowIndex * (NODE_W + columnGap);
-          node.y = marginY + columnIndex * (NODE_H + rowGap);
+          const startX = Math.max(8, (bounds.width - rowWidth) / 2);
+          node.x = Math.min(bounds.width - NODE_W - 8, startX + rowIndex * (NODE_W + columnGap));
+          node.y = marginY + columnIndex * flowLevelGap;
         } else {
           node.x = marginX + columnIndex * (NODE_W + columnGap);
           node.y = startY + rowIndex * (NODE_H + rowGap);
         }
       });
     });
-    markDirty("Arranged by flow");
+    markDirty(isFlowMode ? "Flow arranged" : "Architecture arranged");
     render();
   }
   document.querySelector("#auto-layout").addEventListener("click", arrangeDiagram);
@@ -389,6 +397,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const keywords = [["kubernetes", "aks"], ["function", "functions"], ["virtualmachine", "vm"], ["database", "database"], ["server", "server"], ["cloud", "internet"], ["user", "user"]];
     const matchedKeyword = keywords.find(([keyword]) => source.includes(keyword));
     return matchedKeyword ? matchedKeyword[1] : "external";
+  }
+  function typeForDrawioCell(style) {
+    const source = style.toLowerCase();
+    if (source.includes("rhombus")) return "Decision";
+    if (source.includes("parallelogram")) return "Input or output";
+    if (source.includes("cylinder")) return "Data";
+    if (source.includes("document")) return "Document";
+    if (source.includes("ellipse")) return "Start";
+    return isFlowMode ? "Process" : "Imported";
   }
   function cellLabel(cell) {
     const wrapper = cell.parentElement?.tagName === "object" ? cell.parentElement : null;
@@ -425,7 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const label = cellLabel(cell);
       const style = cell.getAttribute("style") || "";
       const node = {
-        id: uid(), label, type: "Imported", icon: iconForDrawioCell(label, style), environment: "Production", notes: "Imported from draw.io",
+        id: uid(), label, type: typeForDrawioCell(style), icon: iconForDrawioCell(label, style), environment: "Production", notes: "Imported from draw.io",
         x: Math.max(8, Number(geometry.getAttribute("x")) || 40), y: Math.max(8, Number(geometry.getAttribute("y")) || 40)
       };
       importedNodes.push(node);
@@ -466,9 +483,27 @@ document.addEventListener("DOMContentLoaded", () => {
       const endY = isFlowMode ? target.y : target.y + NODE_H / 2;
       const bend = Math.max(35, isFlowMode ? Math.abs(endY - startY) / 2 : Math.abs(endX - startX) / 2);
       const path = isFlowMode ? `M ${startX} ${startY} C ${startX} ${startY + bend}, ${endX} ${endY - bend}, ${endX} ${endY}` : `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`;
-      return `<path d="${path}" fill="none" stroke="#2a6b9d" stroke-width="2" marker-end="url(#arrowhead)"/>`;
+      const edgeLabel = edge.label ? `<text x="${(startX + endX) / 2}" y="${(startY + endY) / 2 - 6}" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#315976" stroke="#f8fbfd" stroke-width="4" paint-order="stroke">${escapeHtml(edge.label)}</text>` : "";
+      return `<path d="${path}" fill="none" stroke="#2a6b9d" stroke-width="2" marker-end="url(#arrowhead)"/>${edgeLabel}`;
     }).join("");
-    const nodes = diagram.nodes.map((node) => `<g transform="translate(${node.x},${node.y})"><rect width="${NODE_W}" height="${NODE_H}" rx="6" fill="#fff" stroke="#8badc6"/><svg x="${(NODE_W - 34) / 2}" y="8" width="34" height="34" viewBox="0 0 32 32">${window.ArchIcons.inner(node.icon)}</svg><text x="${NODE_W / 2}" y="58" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text></g>`).join("");
+    const flowShapeSvg = (node) => {
+      const shape = flowShapeFor(node.type);
+      const common = `fill="#fff" stroke="#326a93" stroke-width="2"`;
+      const shapes = {
+        terminator: `<rect x="4" y="10" width="${NODE_W - 8}" height="${NODE_H - 20}" rx="${(NODE_H - 20) / 2}" ${common}/>` ,
+        decision: `<polygon points="${NODE_W / 2},2 ${NODE_W - 24},${NODE_H / 2} ${NODE_W / 2},${NODE_H - 2} 24,${NODE_H / 2}" ${common}/>` ,
+        "input-output": `<polygon points="18,10 ${NODE_W - 4},10 ${NODE_W - 18},${NODE_H - 10} 4,${NODE_H - 10}" ${common}/>` ,
+        document: `<path d="M4 10 H${NODE_W - 4} V${NODE_H - 20} Q${NODE_W * .75} ${NODE_H} ${NODE_W / 2} ${NODE_H - 14} Q${NODE_W * .25} ${NODE_H - 28} 4 ${NODE_H - 16} Z" ${common}/>` ,
+        data: `<rect x="4" y="10" width="${NODE_W - 8}" height="${NODE_H - 20}" rx="28" ${common}/>` ,
+        loop: `<ellipse cx="${NODE_W / 2}" cy="${NODE_H / 2}" rx="${NODE_W / 2 - 4}" ry="${NODE_H / 2 - 10}" ${common}/>` ,
+        merge: `<polygon points="4,10 ${NODE_W - 4},10 ${NODE_W / 2},${NODE_H - 8}" ${common}/>` ,
+        subprocess: `<rect x="4" y="10" width="${NODE_W - 8}" height="${NODE_H - 20}" ${common}/><path d="M14 10 V${NODE_H - 10} M${NODE_W - 14} 10 V${NODE_H - 10}" stroke="#326a93" stroke-width="2"/>`
+      };
+      return shapes[shape] || `<rect x="4" y="10" width="${NODE_W - 8}" height="${NODE_H - 20}" rx="3" ${common}/>`;
+    };
+    const nodes = diagram.nodes.map((node) => isFlowMode
+      ? `<g transform="translate(${node.x},${node.y})">${flowShapeSvg(node)}<text x="${NODE_W / 2}" y="${NODE_H / 2 + 4}" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text></g>`
+      : `<g transform="translate(${node.x},${node.y})"><rect width="${NODE_W}" height="${NODE_H}" rx="6" fill="#fff" stroke="#8badc6"/><svg x="${(NODE_W - 34) / 2}" y="8" width="34" height="34" viewBox="0 0 32 32">${window.ArchIcons.inner(node.icon)}</svg><text x="${NODE_W / 2}" y="58" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text></g>`).join("");
     download("arch-flow-diagram.svg", `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M 0 0 L 8 4 L 0 8 z" fill="#2a6b9d"/></marker></defs><rect width="100%" height="100%" fill="#f8fbfd"/>${edges}${nodes}</svg>`, "image/svg+xml"); status.textContent = "SVG exported";
   });
   document.querySelector("#clear-diagram").addEventListener("click", () => { diagram = { version: 1, nodes: [], edges: [] }; selectedId = null; connectingFrom = null; markDirty("Canvas cleared"); render(); });
