@@ -173,6 +173,7 @@
 .diagram-stage { background-color: #f8fbfd; background-image: radial-gradient(#b9cfdf 1px, transparent 1px); background-size: 18px 18px; min-width: 0; overflow: hidden; position: relative; }
 .connection-layer { height: 100%; inset: 0; overflow: visible; pointer-events: none; position: absolute; width: 100%; z-index: 1; }
 .connection-layer path { fill: none; stroke: #2a6b9d; stroke-linecap: round; stroke-width: 2; }
+.connection-layer text { fill: #315976; font-family: "Segoe UI", sans-serif; font-size: 10px; font-weight: 700; paint-order: stroke; stroke: #f8fbfd; stroke-width: 4px; }
 .canvas-empty[hidden] { display: none; }
 .architecture-node { align-items: center; background: #fff; border: 1px solid #8badc6; border-radius: 6px; box-shadow: 0 2px 5px rgba(0, 51, 102, .12); box-sizing: border-box; cursor: grab; display: grid; grid-template-rows: 48px 34px; height: 116px; justify-items: center; padding: .75rem .5rem .6rem; position: absolute; text-align: center; user-select: none; width: 120px; z-index: 2; }
 .architecture-node:active { cursor: grabbing; }
@@ -180,6 +181,27 @@
 .architecture-node.is-connect-target { border-color: #16844b; box-shadow: 0 0 0 3px rgba(22, 132, 75, .18); }
 .node-icon { align-items: center; display: flex; height: 48px; justify-content: center; min-height: 48px; width: 48px; }
 .node-label { -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: #142b42; display: -webkit-box; font-size: .68rem; font-weight: 700; line-height: 1.2; max-width: 100%; overflow: hidden; }
+.flow-node { background: transparent; border: 0; box-shadow: none; cursor: grab; display: block; height: 96px; overflow: visible; padding: 0; width: 136px; }
+.flow-node::before { background: #fff; border: 2px solid #326a93; box-shadow: 0 2px 5px rgba(0, 51, 102, .12); box-sizing: border-box; content: ""; inset: 10px 4px; position: absolute; }
+.flow-node .flow-node__content { align-items: center; display: flex; flex-direction: column; inset: 10px 11px; justify-content: center; position: absolute; text-align: center; z-index: 1; }
+.flow-node .node-label { font-size: .7rem; }
+.flow-node__type { color: #5a7891; font-size: .5rem; font-weight: 800; letter-spacing: .05em; margin-bottom: .22rem; text-transform: uppercase; }
+.flow-node__port { background: #fff; border: 2px solid #326a93; border-radius: 50%; height: 7px; left: calc(50% - 4px); position: absolute; width: 7px; z-index: 3; }
+.flow-node__port--in { top: 2px; }
+.flow-node__port--out { bottom: 2px; }
+.flow-node--terminator::before { border-radius: 999px; }
+.flow-node--input-output::before { clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); }
+.flow-node--subprocess::before { background: linear-gradient(90deg, #fff 0 7px, #326a93 7px 9px, #fff 9px calc(100% - 9px), #326a93 calc(100% - 9px) calc(100% - 7px), #fff calc(100% - 7px)); }
+.flow-node--document::before { clip-path: polygon(0 0, 100% 0, 100% 82%, 76% 94%, 50% 82%, 24% 94%, 0 82%); }
+.flow-node--data::before { border-radius: 50% / 12%; }
+.flow-node--decision::before { inset: 2px 24px; transform: rotate(45deg); }
+.flow-node--decision .flow-node__content { inset: 18px 29px; }
+.flow-node--decision .flow-node__type { display: none; }
+.flow-node--loop::before { border-radius: 50%; }
+.flow-node--merge::before { clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.flow-node--merge .flow-node__content { inset: 17px 30px 25px; }
+.flow-node.is-selected::before { border-color: #005a9c; box-shadow: 0 0 0 3px rgba(0, 90, 156, .16); }
+.flow-node.is-connect-target::before { border-color: #16844b; box-shadow: 0 0 0 3px rgba(22, 132, 75, .18); }
 .canvas-empty { align-items: center; color: #7890a3; display: flex; flex-direction: column; font-size: .75rem; inset: 0; justify-content: center; pointer-events: none; position: absolute; text-align: center; }
 .canvas-empty strong { color: #3f5f77; font-size: .92rem; margin-bottom: .3rem; }
 .inspector-heading { align-items: center; border-bottom: 1px solid #dce6ee; color: #476175; display: flex; font-size: .63rem; font-weight: 800; justify-content: space-between; letter-spacing: .06em; padding-bottom: .55rem; text-transform: uppercase; }

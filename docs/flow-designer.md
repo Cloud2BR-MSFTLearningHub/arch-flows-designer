@@ -27,6 +27,7 @@ Last updated: 2026-07-31
       <button class="template-button" type="button" data-template="algorithm"><span>Algorithm</span><small>Input, loop, decision, output</small></button>
       <button class="template-button" type="button" data-template="approval"><span>Approval process</span><small>Request, review, decision, notify</small></button>
       <button class="template-button" type="button" data-template="presentation"><span>Presentation flow</span><small>Context, insight, recommendation, action</small></button>
+      <button class="template-button" type="button" data-template="incident"><span>Incident response</span><small>Alert, triage, contain, close</small></button>
     </div>
   </section>
   <div class="designer-workspace">

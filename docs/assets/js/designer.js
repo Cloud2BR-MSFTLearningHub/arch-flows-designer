@@ -118,22 +118,28 @@ document.addEventListener("DOMContentLoaded", () => {
   function markDirty(message = "Unsaved changes") { status.textContent = message; }
   function flowNode(label, type, icon, x, y) { return { id: uid(), label, type, icon, environment: "Production", notes: "", x, y }; }
   const flowTemplates = {
-    algorithm: [
-      ["Start", "Start", "flowstart"], ["Read input", "Input or output", "flowinput"], ["More items?", "Decision", "flowdecision"], ["Process next item", "Loop", "flowloop"], ["End", "End", "flowend"]
-    ],
-    approval: [
-      ["Start", "Start", "flowstart"], ["Submit request", "Process", "flowprocess"], ["Review request", "Task", "flowtask"], ["Approved?", "Decision", "flowdecision"], ["End", "End", "flowend"]
-    ],
-    presentation: [
+    algorithm: { nodes: [
+      ["Start", "Start", "flowstart"], ["Read input", "Input or output", "flowinput"], ["More items?", "Decision", "flowdecision"], ["Process next item", "Process", "flowprocess"], ["Show result", "Input or output", "flowinput"], ["End", "End", "flowend"]
+    ], edges: [[0, 1], [1, 2], [2, 3, "Yes"], [2, 4, "No"], [3, 2, "Next item"], [4, 5]], positions: [[0, 8], [0, 92], [0, 176], [-160, 260], [160, 260], [160, 344]] },
+    approval: { nodes: [
+      ["Start", "Start", "flowstart"], ["Submit request", "Process", "flowprocess"], ["Review request", "Task", "flowtask"], ["Approved?", "Decision", "flowdecision"], ["Notify requester", "Message", "queue"], ["End", "End", "flowend"]
+    ], edges: [[0, 1], [1, 2], [2, 3], [3, 4, "Yes / No"], [4, 5]], positions: [[0, 8], [0, 92], [0, 176], [0, 260], [0, 344], [0, 428]] },
+    presentation: { nodes: [
       ["Start", "Start", "flowstart"], ["Set the context", "Process", "flowprocess"], ["Present the insight", "Document", "flowdocument"], ["Make the recommendation", "Approval", "flowapproval"], ["End", "End", "flowend"]
-    ]
+    ], edges: [[0, 1], [1, 2], [2, 3], [3, 4]], positions: [[0, 8], [0, 108], [0, 208], [0, 308], [0, 408]] },
+    incident: { nodes: [
+      ["Alert received", "Start", "flowstart"], ["Triage incident", "Process", "flowprocess"], ["Service impacted?", "Decision", "flowdecision"], ["Contain and recover", "Subprocess", "flowsubprocess"], ["Record outcome", "Document", "flowdocument"], ["Close incident", "End", "flowend"]
+    ], edges: [[0, 1], [1, 2], [2, 3, "Yes"], [2, 4, "No"], [3, 4], [4, 5]], positions: [[0, 8], [0, 92], [0, 176], [-160, 260], [160, 260], [160, 344]] }
   };
   function applyFlowTemplate(templateName) {
     const template = flowTemplates[templateName];
     if (!template) return;
     const centerX = Math.max(44, stage.clientWidth / 2 - NODE_W / 2);
-    diagram = { version: 1, nodes: template.map(([label, type, icon], index) => flowNode(label, type, icon, centerX, 22 + index * 112)), edges: [] };
-    diagram.nodes.slice(0, -1).forEach((node, index) => diagram.edges.push({ id: uid(), from: node.id, to: diagram.nodes[index + 1].id }));
+    diagram = { version: 1, nodes: template.nodes.map(([label, type, icon], index) => {
+      const [offsetX, y] = template.positions?.[index] || [0, 8 + index * 84];
+      return flowNode(label, type, icon, centerX + offsetX, y);
+    }), edges: [] };
+    template.edges.forEach(([from, to, label]) => diagram.edges.push({ id: uid(), from: diagram.nodes[from].id, to: diagram.nodes[to].id, label }));
     selectedId = diagram.nodes[0].id;
     connectingFrom = null;
     markDirty("Template loaded - edit any step");
@@ -177,11 +183,14 @@ document.addEventListener("DOMContentLoaded", () => {
     empty.hidden = diagram.nodes.length > 0;
     diagram.nodes.forEach((node) => {
       const element = document.createElement("article");
-      element.className = `architecture-node${node.id === selectedId ? " is-selected" : ""}${connectingFrom && node.id !== connectingFrom ? " is-connect-target" : ""}`;
+      const shape = isFlowMode ? flowShapeFor(node.type) : "asset";
+      element.className = `architecture-node${isFlowMode ? ` flow-node flow-node--${shape}` : ""}${node.id === selectedId ? " is-selected" : ""}${connectingFrom && node.id !== connectingFrom ? " is-connect-target" : ""}`;
       element.dataset.nodeId = node.id;
       element.style.left = `${node.x}px`;
       element.style.top = `${node.y}px`;
-      element.innerHTML = `<span class="node-icon">${window.ArchIcons.svg(node.icon, 48)}</span><span class="node-label">${escapeHtml(node.label)}</span>`;
+      element.innerHTML = isFlowMode
+        ? `<span class="flow-node__port flow-node__port--in" aria-hidden="true"></span><span class="flow-node__content"><span class="flow-node__type">${escapeHtml(node.type)}</span><span class="node-label">${escapeHtml(node.label)}</span></span><span class="flow-node__port flow-node__port--out" aria-hidden="true"></span>`
+        : `<span class="node-icon">${window.ArchIcons.svg(node.icon, 48)}</span><span class="node-label">${escapeHtml(node.label)}</span>`;
       element.addEventListener("pointerdown", beginDrag);
       element.addEventListener("click", selectNode);
       stage.append(element);
@@ -191,6 +200,13 @@ document.addEventListener("DOMContentLoaded", () => {
     selectionStatus.textContent = `${diagram.nodes.length} ${diagram.nodes.length === 1 ? unitNoun : `${unitNoun}s`}`;
   }
   function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character]); }
+  function flowShapeFor(type) {
+    const shapes = {
+      "Start": "terminator", "End": "terminator", "Decision": "decision", "Input or output": "input-output",
+      "Document": "document", "Data": "data", "Subprocess": "subprocess", "Loop": "loop", "Merge": "merge"
+    };
+    return shapes[type] || "process";
+  }
   function renderConnections() {
     const bounds = stage.getBoundingClientRect();
     lines.innerHTML = `<defs><marker id="flow-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M 0 0 L 8 4 L 0 8 z" fill="#2a6b9d"/></marker></defs>`;
@@ -208,6 +224,14 @@ document.addEventListener("DOMContentLoaded", () => {
       path.setAttribute("d", isFlowMode ? `M ${startX} ${startY} C ${startX} ${startY + bend}, ${endX} ${endY - bend}, ${endX} ${endY}` : `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`);
       path.setAttribute("marker-end", "url(#flow-arrow)");
       lines.append(path);
+      if (edge.label) {
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", String((startX + endX) / 2));
+        label.setAttribute("y", String((startY + endY) / 2 - 6));
+        label.setAttribute("text-anchor", "middle");
+        label.textContent = edge.label;
+        lines.append(label);
+      }
     });
   }
   function selectNode(event) {
