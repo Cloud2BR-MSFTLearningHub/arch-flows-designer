@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const shell = document.querySelector("#designer");
   if (!shell) return;
 
-  const categories = [
+  const architectureCategories = [
     ["Compute", "Azure compute"],
     ["Networking", "Azure networking"],
     ["Data", "Azure data"],
@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ["General", "General assets"],
     ["Structure", "Boundaries & scope"]
   ];
-  const assets = [
+  const architectureAssets = [
     { name: "App Service", type: "Compute", category: "Compute", icon: "appservice" },
     { name: "Function App", type: "Compute", category: "Compute", icon: "functions" },
     { name: "AKS", type: "Compute", category: "Compute", icon: "aks" },
@@ -65,6 +65,32 @@ document.addEventListener("DOMContentLoaded", () => {
     { name: "Resource Group", type: "Scope", category: "Structure", icon: "resourcegroup" },
     { name: "Subscription", type: "Scope", category: "Structure", icon: "subscription" }
   ];
+  const flowCategories = [
+    ["Flow", "Flow control"],
+    ["Work", "Work & decisions"],
+    ["Information", "Information & handoffs"],
+    ["Participants", "Participants & systems"]
+  ];
+  const flowAssets = [
+    { name: "Start", type: "Start", category: "Flow", icon: "flowstart" },
+    { name: "End", type: "End", category: "Flow", icon: "flowend" },
+    { name: "Process", type: "Process", category: "Work", icon: "flowprocess" },
+    { name: "Decision", type: "Decision", category: "Work", icon: "flowdecision" },
+    { name: "Manual Task", type: "Task", category: "Work", icon: "flowtask" },
+    { name: "Approval", type: "Approval", category: "Work", icon: "flowapproval" },
+    { name: "Input / Output", type: "Input or output", category: "Information", icon: "flowinput" },
+    { name: "Document", type: "Document", category: "Information", icon: "flowdocument" },
+    { name: "Data Store", type: "Data", category: "Information", icon: "database" },
+    { name: "Message", type: "Message", category: "Information", icon: "queue" },
+    { name: "User", type: "Participant", category: "Participants", icon: "user" },
+    { name: "Team", type: "Participant", category: "Participants", icon: "users" },
+    { name: "External System", type: "System", category: "Participants", icon: "external" },
+    { name: "Application", type: "System", category: "Participants", icon: "client" }
+  ];
+  const isFlowMode = shell.dataset.mode === "flow";
+  const categories = isFlowMode ? flowCategories : architectureCategories;
+  const assets = isFlowMode ? flowAssets : architectureAssets;
+  const unitNoun = isFlowMode ? "symbol" : "asset";
   const stage = document.querySelector("#diagram-stage");
   const lines = document.querySelector("#connection-layer");
   const empty = document.querySelector("#canvas-empty");
@@ -135,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     renderConnections();
     renderInspector();
-    selectionStatus.textContent = `${diagram.nodes.length} ${diagram.nodes.length === 1 ? "asset" : "assets"}`;
+    selectionStatus.textContent = `${diagram.nodes.length} ${diagram.nodes.length === 1 ? unitNoun : `${unitNoun}s`}`;
   }
   function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character]); }
   function renderConnections() {

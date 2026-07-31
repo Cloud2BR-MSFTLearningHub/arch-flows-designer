@@ -45,5 +45,7 @@ extra:
       link: https://github.com/Cloud2BR-MSFTLearningHub
       name: Cloud2BR OSS - Learning Hub
 nav:
-  - Designer: index.md
+  - Start: index.md
+  - Architecture Designer: architecture.md
+  - Flow Designer: flow-designer.md
   - About: overview.md

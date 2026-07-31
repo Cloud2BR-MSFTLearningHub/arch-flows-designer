@@ -6,6 +6,15 @@
  */
 window.ArchIcons = (function () {
   const ICONS = {
+    // Flowchart symbols
+    flowstart: { c: "#157A4A", s: `<circle cx="16" cy="16" r="7" fill="none" stroke="#fff" stroke-width="1.7"/><path d="M14 12.5l6 3.5-6 3.5z" fill="#fff"/>` },
+    flowend: { c: "#B83C3C", s: `<circle cx="16" cy="16" r="7" fill="none" stroke="#fff" stroke-width="1.7"/><rect x="13" y="13" width="6" height="6" rx=".8" fill="#fff"/>` },
+    flowprocess: { c: "#0062B1", s: `<rect x="9" y="10" width="14" height="12" rx="1.5" fill="none" stroke="#fff" stroke-width="1.7"/>` },
+    flowdecision: { c: "#B5560E", s: `<path d="M16 8l8 8-8 8-8-8z" fill="none" stroke="#fff" stroke-width="1.7"/>` },
+    flowtask: { c: "#0062B1", s: `<rect x="10" y="8" width="12" height="16" rx="2" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M13 13h6M13 17h6" stroke="#fff" stroke-width="1.4"/>` },
+    flowapproval: { c: "#157A4A", s: `<circle cx="16" cy="16" r="8" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M12 16l2.6 2.6 5.2-5.6" fill="none" stroke="#fff" stroke-width="1.7"/>` },
+    flowinput: { c: "#6E33C7", s: `<path d="M11 10h13l-3 12H8z" fill="none" stroke="#fff" stroke-width="1.6"/>` },
+    flowdocument: { c: "#6E33C7", s: `<path d="M11 8h8l4 4v12H11z" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M19 8v4h4M13 17h7M13 20h5" stroke="#fff" stroke-width="1.3"/>` },
     // Compute
     appservice: { c: "#0078D4", s: `<circle cx="16" cy="16" r="8" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M8 16h16M16 8c3 2.5 3 13.5 0 16M16 8c-3 2.5-3 13.5 0 16" fill="none" stroke="#fff" stroke-width="1.3"/>` },
     functions: { c: "#0062B1", s: `<path d="M18 7l-7 10h4l-2 8 8-11h-4z" fill="#fff"/>` },
