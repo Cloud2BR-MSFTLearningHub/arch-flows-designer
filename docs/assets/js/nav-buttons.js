@@ -4,12 +4,14 @@
  * (between the site title and the search box), replacing the need for a left
  * navigation sidebar. Highlights the button that matches the current page.
  */
+const navScriptUrl = document.currentScript?.src;
+
 document.addEventListener("DOMContentLoaded", () => {
   const header = document.querySelector(".md-header__inner");
   const title = document.querySelector(".md-header__title");
   if (!header || !title) return;
 
-  const base = (document.querySelector('link[rel="canonical"]')?.href || location.href).replace(/[^/]*$/, "");
+  const base = navScriptUrl ? new URL("../../", navScriptUrl) : new URL("./", location.href);
   const links = [
     { label: "Start", href: "" },
     { label: "Architecture Designer", href: "architecture/" },
@@ -21,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
   nav.className = "site-nav";
   nav.setAttribute("aria-label", "Designer sections");
   links.forEach(({ label, href }) => {
-    const url = base + href;
+    const url = new URL(href, base).href;
     const link = document.createElement("a");
     link.className = "site-nav__link";
     link.href = url;

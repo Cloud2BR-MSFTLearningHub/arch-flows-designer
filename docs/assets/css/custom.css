@@ -95,12 +95,13 @@
 .md-main__inner { margin: 0 auto; max-width: none; }
 .md-content { max-width: none; }
 .md-content__inner { margin: 1.2rem auto 2.5rem; max-width: 1180px; padding: 0 1rem; }
-.md-header__title { flex: 0 1 auto !important; }
-.site-nav { align-items: center; display: flex; flex: 1 1 auto; gap: .2rem; margin: 0 .75rem; overflow-x: auto; }
+.md-header__title { flex: 0 0 auto !important; min-width: 10rem; }
+.site-nav { align-items: center; display: flex; flex: 1 1 auto; gap: .2rem; margin: 0 .75rem; min-width: 0; overflow-x: auto; }
 .site-nav__link { border-radius: 4px; color: #c9ddf1; font-size: .72rem; font-weight: 700; padding: .4rem .62rem; text-decoration: none; white-space: nowrap; }
 .site-nav__link:hover { background: rgba(255, 255, 255, .12); color: #fff; }
 .site-nav__link[aria-current="page"] { background: #fff; color: var(--brand-navy); }
-@media screen and (max-width: 58rem) { .site-nav { gap: 0; margin: 0 .4rem; } .site-nav__link { font-size: .66rem; padding: .34rem .48rem; } }
+@media screen and (max-width: 76.25rem) { .md-header__title { min-width: 0; } .site-nav { gap: 0; margin: 0 .35rem; } .site-nav__link { font-size: .64rem; padding: .34rem .42rem; } }
+@media screen and (max-width: 58rem) { .md-header__title { display: none; } .site-nav__link { font-size: 0; } .site-nav__link::first-letter { font-size: .7rem; } }
 
 /* Mode landing page */
 .mode-landing { margin: 2.4rem auto 3rem; max-width: 1040px; }
