@@ -184,6 +184,7 @@
 .architecture-node:active { cursor: grabbing; }
 .architecture-node.is-selected { border: 2px solid #005a9c; box-shadow: 0 0 0 3px rgba(0, 90, 156, .16); }
 .architecture-node.is-connect-target { border-color: #16844b; box-shadow: 0 0 0 3px rgba(22, 132, 75, .18); }
+.visually-hidden { clip: rect(0 0 0 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
 .connection-port { background: #fff; border: 2px solid #08783f; border-radius: 50%; box-shadow: 0 1px 3px rgba(0, 51, 102, .25); cursor: crosshair; height: 13px; padding: 0; position: absolute; width: 13px; z-index: 5; }
 .connection-port::after { content: ""; inset: -7px; position: absolute; }
 .connection-port:hover, .connection-port:focus-visible { background: #1a9658; border-color: #fff; box-shadow: 0 0 0 3px rgba(26, 150, 88, .28); outline: 0; }

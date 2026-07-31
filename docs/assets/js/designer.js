@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const template = flowTemplates[templateName];
     if (!template) return;
     diagram = { version: 1, nodes: template.nodes.map(([label, type, icon]) => flowNode(label, type, icon, 8, 8)), edges: [] };
-    template.edges.forEach(([from, to, label]) => diagram.edges.push({ id: uid(), from: diagram.nodes[from].id, to: diagram.nodes[to].id, label }));
+    template.edges.forEach(([from, to, label]) => diagram.edges.push({ id: uid(), from: diagram.nodes[from].id, to: diagram.nodes[to].id, label, fromSide: "bottom", toSide: "top" }));
     selectedId = diagram.nodes[0].id;
     connectingFrom = null;
     connectingFromSide = null;
