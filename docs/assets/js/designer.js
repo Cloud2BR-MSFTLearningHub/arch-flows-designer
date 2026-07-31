@@ -109,6 +109,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let diagram = { version: 1, nodes: [], edges: [] };
   let selectedId = null;
   let connectingFrom = null;
+  let connectingFromSide = null;
+  let connectingTo = null;
   let drag = null;
   const NODE_W = isFlowMode ? 136 : 120;
   const NODE_H = isFlowMode ? 72 : 116;
@@ -138,6 +140,8 @@ document.addEventListener("DOMContentLoaded", () => {
     template.edges.forEach(([from, to, label]) => diagram.edges.push({ id: uid(), from: diagram.nodes[from].id, to: diagram.nodes[to].id, label }));
     selectedId = diagram.nodes[0].id;
     connectingFrom = null;
+    connectingFromSide = null;
+    connectingTo = null;
     arrangeDiagram("Template arranged - edit any step");
   }
   function renderPalette(query = "") {
@@ -179,15 +183,19 @@ document.addEventListener("DOMContentLoaded", () => {
     diagram.nodes.forEach((node) => {
       const element = document.createElement("article");
       const shape = isFlowMode ? flowShapeFor(node.type) : "asset";
-      element.className = `architecture-node${isFlowMode ? ` flow-node flow-node--${shape}` : ""}${node.id === selectedId ? " is-selected" : ""}${connectingFrom && node.id !== connectingFrom ? " is-connect-target" : ""}`;
+      element.className = `architecture-node${isFlowMode ? ` flow-node flow-node--${shape}` : ""}${node.id === selectedId ? " is-selected" : ""}${connectingFrom && connectingFromSide && node.id !== connectingFrom ? " is-connect-target" : ""}`;
       element.dataset.nodeId = node.id;
       element.style.left = `${node.x}px`;
       element.style.top = `${node.y}px`;
       element.innerHTML = isFlowMode
-        ? `<span class="flow-node__port flow-node__port--in" aria-hidden="true"></span><span class="flow-node__content"><span class="flow-node__type">${escapeHtml(node.type)}</span><span class="node-label">${escapeHtml(node.label)}</span></span><span class="flow-node__port flow-node__port--out" aria-hidden="true"></span>`
-        : `<span class="node-icon">${window.ArchIcons.svg(node.icon, 48)}</span><span class="node-label">${escapeHtml(node.label)}</span>`;
+        ? `<span class="flow-node__content"><span class="flow-node__type">${escapeHtml(node.type)}</span><span class="node-label">${escapeHtml(node.label)}</span></span>${connectionPorts(node)}`
+        : `<span class="node-icon">${window.ArchIcons.svg(node.icon, 48)}</span><span class="node-label">${escapeHtml(node.label)}</span>${connectionPorts(node)}`;
       element.addEventListener("pointerdown", beginDrag);
       element.addEventListener("click", selectNode);
+      element.querySelectorAll(".connection-port").forEach((port) => {
+        port.addEventListener("pointerdown", (event) => event.stopPropagation());
+        port.addEventListener("click", selectConnectionPort);
+      });
       stage.append(element);
     });
     renderConnections();
@@ -195,6 +203,10 @@ document.addEventListener("DOMContentLoaded", () => {
     selectionStatus.textContent = `${diagram.nodes.length} ${diagram.nodes.length === 1 ? unitNoun : `${unitNoun}s`}`;
   }
   function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character]); }
+  function connectionPorts(node) {
+    if (node.id !== selectedId) return "";
+    return ["top", "right", "bottom", "left"].map((side) => `<button class="connection-port connection-port--${side}" type="button" data-side="${side}" title="${connectingTo === node.id ? "Finish arrow at" : "Start arrow from"} ${side}"><span class="visually-hidden">${side} connection point</span></button>`).join("");
+  }
   function flowShapeFor(type) {
     const shapes = {
       "Start": "terminator", "End": "terminator", "Decision": "decision", "Input or output": "input-output",
@@ -202,7 +214,58 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     return shapes[type] || "process";
   }
-  function connectionGeometry(source, target) {
+  function portPosition(node, side) {
+    if (isFlowMode) {
+      const shape = flowShapeFor(node.type);
+      const insetX = shape === "decision" ? 34 : 4;
+      const insetY = shape === "decision" ? 1 : 8;
+      const positions = {
+        top: { x: node.x + NODE_W / 2, y: node.y + insetY, dx: 0, dy: -1 },
+        right: { x: node.x + NODE_W - insetX, y: node.y + NODE_H / 2, dx: 1, dy: 0 },
+        bottom: { x: node.x + NODE_W / 2, y: node.y + NODE_H - insetY, dx: 0, dy: 1 },
+        left: { x: node.x + insetX, y: node.y + NODE_H / 2, dx: -1, dy: 0 }
+      };
+      return positions[side];
+    }
+    const positions = {
+      top: { x: node.x + NODE_W / 2, y: node.y, dx: 0, dy: -1 },
+      right: { x: node.x + NODE_W, y: node.y + NODE_H / 2, dx: 1, dy: 0 },
+      bottom: { x: node.x + NODE_W / 2, y: node.y + NODE_H, dx: 0, dy: 1 },
+      left: { x: node.x, y: node.y + NODE_H / 2, dx: -1, dy: 0 }
+    };
+    return positions[side];
+  }
+  function connectionGeometry(source, target, edge = {}) {
+    if (edge.fromSide && edge.toSide) {
+      const start = portPosition(source, edge.fromSide);
+      const end = portPosition(target, edge.toSide);
+      const distance = Math.hypot(end.x - start.x, end.y - start.y);
+      const horizontalPair = start.dy === 0 && end.dy === 0;
+      const verticalPair = start.dx === 0 && end.dx === 0;
+      const sidesFaceEachOther = (edge.fromSide === "right" && edge.toSide === "left" && start.x <= end.x)
+        || (edge.fromSide === "left" && edge.toSide === "right" && start.x >= end.x)
+        || (edge.fromSide === "bottom" && edge.toSide === "top" && start.y <= end.y)
+        || (edge.fromSide === "top" && edge.toSide === "bottom" && start.y >= end.y);
+      const stubLength = 24;
+      const startStub = { x: start.x + start.dx * stubLength, y: start.y + start.dy * stubLength };
+      const endStub = { x: end.x + end.dx * stubLength, y: end.y + end.dy * stubLength };
+      if (horizontalPair && !sidesFaceEachOther) {
+        const topRoute = Math.min(source.y, target.y) - 36;
+        const routeY = topRoute >= 8 ? topRoute : Math.max(source.y + NODE_H, target.y + NODE_H) + 36;
+        return { startX: start.x, startY: start.y, endX: end.x, endY: end.y, labelX: (startStub.x + endStub.x) / 2, labelY: routeY - 6, path: `M ${start.x} ${start.y} L ${startStub.x} ${startStub.y} L ${startStub.x} ${routeY} L ${endStub.x} ${routeY} L ${endStub.x} ${endStub.y} L ${end.x} ${end.y}` };
+      }
+      if (verticalPair && !sidesFaceEachOther) {
+        const rightRoute = Math.max(source.x + NODE_W, target.x + NODE_W) + 36;
+        const routeX = rightRoute < stage.clientWidth - 8 ? rightRoute : Math.max(8, Math.min(source.x, target.x) - 36);
+        return { startX: start.x, startY: start.y, endX: end.x, endY: end.y, labelX: routeX, labelY: (startStub.y + endStub.y) / 2 - 6, path: `M ${start.x} ${start.y} L ${startStub.x} ${startStub.y} L ${routeX} ${startStub.y} L ${routeX} ${endStub.y} L ${endStub.x} ${endStub.y} L ${end.x} ${end.y}` };
+      }
+      const offset = Math.max(28, Math.min(60, distance / 3));
+      const control1 = { x: start.x + start.dx * offset, y: start.y + start.dy * offset };
+      const control2 = { x: end.x + end.dx * offset, y: end.y + end.dy * offset };
+      const labelX = (start.x + 3 * control1.x + 3 * control2.x + end.x) / 8;
+      const labelY = (start.y + 3 * control1.y + 3 * control2.y + end.y) / 8 - 6;
+      return { startX: start.x, startY: start.y, endX: end.x, endY: end.y, labelX, labelY, path: `M ${start.x} ${start.y} C ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${end.x} ${end.y}` };
+    }
     if (!isFlowMode) {
       const startX = source.x + NODE_W;
       const startY = source.y + NODE_H / 2;
@@ -237,7 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const source = nodeById(edge.from);
       const target = nodeById(edge.to);
       if (!source || !target) return;
-      const geometry = connectionGeometry(source, target);
+      const geometry = connectionGeometry(source, target, edge);
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", geometry.path);
       path.setAttribute("marker-end", "url(#flow-arrow)");
@@ -255,15 +318,36 @@ document.addEventListener("DOMContentLoaded", () => {
   function selectNode(event) {
     event.stopPropagation();
     const nodeId = event.currentTarget.dataset.nodeId;
-    if (connectingFrom && connectingFrom !== nodeId) {
-      if (!diagram.edges.some((edge) => edge.from === connectingFrom && edge.to === nodeId)) diagram.edges.push({ id: uid(), from: connectingFrom, to: nodeId });
-      connectingFrom = null;
-      markDirty("Connection added");
-    } else if (connectingFrom === nodeId) {
-      connectingFrom = null;
-      markDirty("Connection cancelled");
+    if (connectingFrom && connectingFromSide && connectingFrom !== nodeId) {
+      connectingTo = nodeId;
+      selectedId = nodeId;
+      status.textContent = "Choose where the arrow ends";
+      render();
+      return;
     }
     selectedId = nodeId;
+    render();
+  }
+  function selectConnectionPort(event) {
+    event.stopPropagation();
+    const nodeId = event.currentTarget.closest(".architecture-node").dataset.nodeId;
+    const side = event.currentTarget.dataset.side;
+    if (connectingFrom && connectingTo === nodeId) {
+      if (!diagram.edges.some((edge) => edge.from === connectingFrom && edge.to === nodeId && edge.fromSide === connectingFromSide && edge.toSide === side)) {
+        diagram.edges.push({ id: uid(), from: connectingFrom, to: nodeId, fromSide: connectingFromSide, toSide: side });
+      }
+      connectingFrom = null;
+      connectingFromSide = null;
+      connectingTo = null;
+      markDirty("Arrow connected");
+      render();
+      return;
+    }
+    connectingFrom = nodeId;
+    connectingFromSide = side;
+    connectingTo = null;
+    selectedId = nodeId;
+    status.textContent = "Select the target object";
     render();
   }
   function beginDrag(event) {
@@ -308,7 +392,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#connect-node").addEventListener("click", () => {
     if (!selectedId) return;
     connectingFrom = selectedId;
-    status.textContent = isFlowMode ? "Select the next step" : "Select the target asset";
+    connectingFromSide = null;
+    connectingTo = null;
+    status.textContent = "Choose where the arrow starts";
     render();
   });
   document.querySelector("#delete-node").addEventListener("click", () => {
@@ -317,10 +403,20 @@ document.addEventListener("DOMContentLoaded", () => {
     diagram.edges = diagram.edges.filter((edge) => edge.from !== selectedId && edge.to !== selectedId);
     selectedId = null;
     connectingFrom = null;
+    connectingFromSide = null;
+    connectingTo = null;
     markDirty(`${isFlowMode ? "Symbol" : "Asset"} deleted`);
     render();
   });
-  stage.addEventListener("click", () => { if (!connectingFrom) { selectedId = null; render(); } });
+  stage.addEventListener("click", () => {
+    const wasConnecting = Boolean(connectingFrom);
+    selectedId = null;
+    connectingFrom = null;
+    connectingFromSide = null;
+    connectingTo = null;
+    if (wasConnecting) markDirty("Connection cancelled");
+    render();
+  });
   document.querySelector("#asset-search").addEventListener("input", (event) => renderPalette(event.target.value));
   document.querySelectorAll("[data-template]").forEach((button) => button.addEventListener("click", () => applyFlowTemplate(button.dataset.template)));
   function arrangeDiagram(message) {
@@ -480,6 +576,8 @@ document.addEventListener("DOMContentLoaded", () => {
       diagram = next;
       selectedId = null;
       connectingFrom = null;
+      connectingFromSide = null;
+      connectingTo = null;
       markDirty(isNative ? "JSON diagram loaded" : "draw.io diagram imported");
       render();
     } catch (error) {
@@ -491,7 +589,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const edges = diagram.edges.map((edge) => {
       const source = nodeById(edge.from); const target = nodeById(edge.to);
       if (!source || !target) return "";
-      const geometry = connectionGeometry(source, target);
+      const geometry = connectionGeometry(source, target, edge);
       const edgeLabel = edge.label ? `<text x="${geometry.labelX}" y="${geometry.labelY}" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#315976" stroke="#f8fbfd" stroke-width="4" paint-order="stroke">${escapeHtml(edge.label)}</text>` : "";
       return `<path d="${geometry.path}" fill="none" stroke="#2a6b9d" stroke-width="2" marker-end="url(#arrowhead)"/>${edgeLabel}`;
     }).join("");
@@ -515,7 +613,7 @@ document.addEventListener("DOMContentLoaded", () => {
       : `<g transform="translate(${node.x},${node.y})"><rect width="${NODE_W}" height="${NODE_H}" rx="6" fill="#fff" stroke="#8badc6"/><svg x="${(NODE_W - 34) / 2}" y="8" width="34" height="34" viewBox="0 0 32 32">${window.ArchIcons.inner(node.icon)}</svg><text x="${NODE_W / 2}" y="58" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text></g>`).join("");
     download("arch-flow-diagram.svg", `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto" overflow="visible"><path d="M 0 0 L 8 4 L 0 8 z" fill="#2a6b9d"/></marker></defs><rect width="100%" height="100%" fill="#f8fbfd"/>${edges}${nodes}</svg>`, "image/svg+xml"); status.textContent = "SVG exported";
   });
-  document.querySelector("#clear-diagram").addEventListener("click", () => { diagram = { version: 1, nodes: [], edges: [] }; selectedId = null; connectingFrom = null; markDirty("Canvas cleared"); render(); });
+  document.querySelector("#clear-diagram").addEventListener("click", () => { diagram = { version: 1, nodes: [], edges: [] }; selectedId = null; connectingFrom = null; connectingFromSide = null; connectingTo = null; markDirty("Canvas cleared"); render(); });
   window.addEventListener("resize", renderConnections);
   renderPalette();
   render();

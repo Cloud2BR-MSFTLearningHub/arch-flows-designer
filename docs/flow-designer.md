@@ -48,7 +48,7 @@ Last updated: 2026-07-31
         <label>Type<input id="node-type" type="text" readonly></label>
         <label>Environment<select id="node-environment"><option>Production</option><option>Staging</option><option>Development</option><option>Shared</option></select></label>
         <label>Notes<textarea id="node-notes" rows="4" maxlength="180" placeholder="Optional context"></textarea></label>
-        <button class="connect-button" id="connect-node" type="button">Connect to next step</button>
+        <button class="connect-button" id="connect-node" type="button">Connect from a point</button>
       </form>
     </aside>
   </div>

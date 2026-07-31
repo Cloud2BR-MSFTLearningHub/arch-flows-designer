@@ -184,6 +184,13 @@
 .architecture-node:active { cursor: grabbing; }
 .architecture-node.is-selected { border: 2px solid #005a9c; box-shadow: 0 0 0 3px rgba(0, 90, 156, .16); }
 .architecture-node.is-connect-target { border-color: #16844b; box-shadow: 0 0 0 3px rgba(22, 132, 75, .18); }
+.connection-port { background: #fff; border: 2px solid #08783f; border-radius: 50%; box-shadow: 0 1px 3px rgba(0, 51, 102, .25); cursor: crosshair; height: 13px; padding: 0; position: absolute; width: 13px; z-index: 5; }
+.connection-port::after { content: ""; inset: -7px; position: absolute; }
+.connection-port:hover, .connection-port:focus-visible { background: #1a9658; border-color: #fff; box-shadow: 0 0 0 3px rgba(26, 150, 88, .28); outline: 0; }
+.connection-port--top { left: calc(50% - 6px); top: -7px; }
+.connection-port--right { right: -7px; top: calc(50% - 6px); }
+.connection-port--bottom { bottom: -7px; left: calc(50% - 6px); }
+.connection-port--left { left: -7px; top: calc(50% - 6px); }
 .node-icon { align-items: center; display: flex; height: 48px; justify-content: center; min-height: 48px; width: 48px; }
 .node-label { -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: #142b42; display: -webkit-box; font-size: .68rem; font-weight: 700; line-height: 1.2; max-width: 100%; overflow: hidden; }
 .flow-node { background: transparent; border: 0; box-shadow: none; cursor: grab; display: block; height: 72px; overflow: visible; padding: 0; width: 136px; }
@@ -191,9 +198,10 @@
 .flow-node .flow-node__content { align-items: center; display: flex; flex-direction: column; inset: 8px 11px; justify-content: center; position: absolute; text-align: center; z-index: 1; }
 .flow-node .node-label { font-size: .7rem; }
 .flow-node__type { color: #5a7891; font-size: .5rem; font-weight: 800; letter-spacing: .05em; margin-bottom: .22rem; text-transform: uppercase; }
-.flow-node__port { background: #fff; border: 2px solid #326a93; border-radius: 50%; height: 7px; left: calc(50% - 4px); position: absolute; width: 7px; z-index: 3; }
-.flow-node__port--in { top: 2px; }
-.flow-node__port--out { bottom: 2px; }
+.flow-node .connection-port--top { top: 1px; }
+.flow-node .connection-port--right { right: -3px; }
+.flow-node .connection-port--bottom { bottom: 1px; }
+.flow-node .connection-port--left { left: -3px; }
 .flow-node--terminator::before { border-radius: 999px; }
 .flow-node--input-output::before { clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); }
 .flow-node--subprocess::before { background: linear-gradient(90deg, #fff 0 7px, #326a93 7px 9px, #fff 9px calc(100% - 9px), #326a93 calc(100% - 9px) calc(100% - 7px), #fff calc(100% - 7px)); }
@@ -202,6 +210,10 @@
 .flow-node--decision::before { inset: 1px 34px; transform: rotate(45deg); }
 .flow-node--decision .flow-node__content { inset: 10px 35px; }
 .flow-node--decision .flow-node__type { display: none; }
+.flow-node--decision .connection-port--top { top: -6px; }
+.flow-node--decision .connection-port--right { right: 27px; }
+.flow-node--decision .connection-port--bottom { bottom: -6px; }
+.flow-node--decision .connection-port--left { left: 27px; }
 .flow-node--loop::before { border-radius: 50%; }
 .flow-node--merge::before { clip-path: polygon(0 0, 100% 0, 50% 100%); }
 .flow-node--merge .flow-node__content { inset: 17px 30px 25px; }
