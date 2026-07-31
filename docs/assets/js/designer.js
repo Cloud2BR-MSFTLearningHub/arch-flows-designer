@@ -223,11 +223,74 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   stage.addEventListener("click", () => { if (!connectingFrom) { selectedId = null; render(); } });
   document.querySelector("#asset-search").addEventListener("input", (event) => renderPalette(event.target.value));
-  document.querySelector("#auto-layout").addEventListener("click", () => {
-    const width = Math.max(stage.clientWidth - 170, 160);
-    diagram.nodes.forEach((node, index) => { node.x = 25 + (index % 3) * Math.min(190, width / 3); node.y = 50 + Math.floor(index / 3) * 115; });
-    markDirty("Arranged"); render();
-  });
+  function arrangeDiagram() {
+    if (!diagram.nodes.length) return;
+
+    const nodeIds = new Set(diagram.nodes.map((node) => node.id));
+    const incoming = new Map(diagram.nodes.map((node) => [node.id, []]));
+    const outgoing = new Map(diagram.nodes.map((node) => [node.id, []]));
+    diagram.edges.forEach((edge) => {
+      if (!nodeIds.has(edge.from) || !nodeIds.has(edge.to) || edge.from === edge.to) return;
+      outgoing.get(edge.from).push(edge.to);
+      incoming.get(edge.to).push(edge.from);
+    });
+
+    // Assign each node to the first column after all of its prerequisites.
+    const remaining = new Map(diagram.nodes.map((node) => [node.id, incoming.get(node.id).length]));
+    const levels = new Map();
+    const queue = diagram.nodes.filter((node) => remaining.get(node.id) === 0).map((node) => node.id);
+    queue.forEach((nodeId) => levels.set(nodeId, 0));
+    for (let index = 0; index < queue.length; index += 1) {
+      const nodeId = queue[index];
+      outgoing.get(nodeId).forEach((targetId) => {
+        levels.set(targetId, Math.max(levels.get(targetId) || 0, (levels.get(nodeId) || 0) + 1));
+        remaining.set(targetId, remaining.get(targetId) - 1);
+        if (remaining.get(targetId) === 0) queue.push(targetId);
+      });
+    }
+
+    // Cyclic diagrams have no natural source; keep their connected nodes together.
+    diagram.nodes.forEach((node) => {
+      if (!levels.has(node.id)) {
+        const predecessorLevels = incoming.get(node.id).map((nodeId) => levels.get(nodeId)).filter((level) => level !== undefined);
+        levels.set(node.id, predecessorLevels.length ? Math.max(...predecessorLevels) + 1 : 0);
+      }
+    });
+
+    const columns = [];
+    diagram.nodes.forEach((node) => {
+      const level = levels.get(node.id);
+      if (!columns[level]) columns[level] = [];
+      columns[level].push(node);
+    });
+
+    const bounds = stage.getBoundingClientRect();
+    const marginX = 44;
+    const marginY = 36;
+    const columnGap = 92;
+    const rowGap = 34;
+    columns.forEach((column, columnIndex) => {
+      if (!column) return;
+      // Place related nodes near the vertical midpoint of their upstream links.
+      column.sort((first, second) => {
+        const midpoint = (node) => {
+          const predecessors = incoming.get(node.id);
+          if (!predecessors.length) return node.y;
+          return predecessors.reduce((sum, nodeId) => sum + (nodeById(nodeId)?.y || 0), 0) / predecessors.length;
+        };
+        return midpoint(first) - midpoint(second);
+      });
+      const columnHeight = column.length * NODE_H + Math.max(0, column.length - 1) * rowGap;
+      const startY = Math.max(marginY, (bounds.height - columnHeight) / 2);
+      column.forEach((node, rowIndex) => {
+        node.x = marginX + columnIndex * (NODE_W + columnGap);
+        node.y = startY + rowIndex * (NODE_H + rowGap);
+      });
+    });
+    markDirty("Arranged by flow");
+    render();
+  }
+  document.querySelector("#auto-layout").addEventListener("click", arrangeDiagram);
   function download(filename, content, type) {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([content], { type })); link.download = filename; link.click(); URL.revokeObjectURL(link.href);
