@@ -36,6 +36,7 @@ extra_css:
 extra_javascript:
   - assets/js/logo-link.js
   - assets/js/external-links.js
+  - assets/js/nav-buttons.js
   - assets/js/icons.js
   - assets/js/designer.js
 extra:

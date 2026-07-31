@@ -90,9 +90,21 @@
 .guide-card:hover { box-shadow: 0 7px 18px rgba(0, 51, 102, 0.12); color: inherit; }
 @media screen and (max-width: 44rem) { .guide-grid { grid-template-columns: 1fr; } }
 
+/* Site-wide layout: no left navigation sidebar; top header buttons replace it. */
+.md-sidebar { display: none !important; }
+.md-main__inner { margin: 0 auto; max-width: none; }
+.md-content { max-width: none; }
+.md-content__inner { margin: 1.2rem auto 2.5rem; max-width: 1180px; padding: 0 1rem; }
+.md-header__title { flex: 0 1 auto !important; }
+.site-nav { align-items: center; display: flex; flex: 1 1 auto; gap: .2rem; margin: 0 .75rem; overflow-x: auto; }
+.site-nav__link { border-radius: 4px; color: #c9ddf1; font-size: .72rem; font-weight: 700; padding: .4rem .62rem; text-decoration: none; white-space: nowrap; }
+.site-nav__link:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.site-nav__link[aria-current="page"] { background: #fff; color: var(--brand-navy); }
+@media screen and (max-width: 58rem) { .site-nav { gap: 0; margin: 0 .4rem; } .site-nav__link { font-size: .66rem; padding: .34rem .48rem; } }
+
 /* Mode landing page */
-.mode-landing { margin: 1.6rem auto 3rem; max-width: 980px; }
-.mode-landing__intro { color: #536c81; font-size: 1rem; margin: .5rem 0 1.4rem; max-width: 40rem; }
+.mode-landing { margin: 2.4rem auto 3rem; max-width: 1040px; }
+.mode-landing__intro { color: #536c81; font-size: 1.05rem; margin: .6rem 0 2rem; max-width: 42rem; }
 .mode-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mode-card { background: #fff; border: 1px solid #c7d8e6; border-top: 5px solid var(--brand-blue); border-radius: 6px; color: #1d3449 !important; display: flex; flex-direction: column; min-height: 260px; padding: 1.25rem; text-decoration: none !important; transition: box-shadow .18s ease, transform .18s ease; }
 .mode-card--flow { border-top-color: #157a4a; }
@@ -107,10 +119,8 @@
 @media screen and (max-width: 44rem) { .mode-grid { grid-template-columns: 1fr; } .mode-card { min-height: 210px; } }
 
 /* Architecture designer */
-.md-main__inner:has(#designer) { margin: 0; max-width: none; padding: .65rem .8rem .8rem; }
-.md-main__inner:has(#designer) .md-sidebar { display: none; }
-.md-content:has(#designer) { max-width: none; }
-.md-content__inner:has(#designer) { margin: 0; padding: 0; }
+.md-main__inner:has(#designer) { padding: .65rem .8rem .8rem; }
+.md-content__inner:has(#designer) { margin: 0; max-width: none; padding: 0; }
 .md-content__inner:has(#designer) > h1,
 .md-content__inner:has(#designer) > h1 + p,
 .md-content__inner:has(#designer) > h1 + p + p,
