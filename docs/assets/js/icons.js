@@ -76,9 +76,62 @@ window.ArchIcons = (function () {
   };
   const FALLBACK = { c: "#5B6B7B", s: `<circle cx="16" cy="16" r="6" fill="none" stroke="#fff" stroke-width="1.6"/>` };
 
-  function get(key) { return ICONS[key] || FALLBACK; }
-  function inner(key) { const icon = get(key); return `<rect width="32" height="32" rx="7" fill="${icon.c}"/>${icon.s}`; }
-  function svg(key, size) { return `<svg viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true" focusable="false">${inner(key)}</svg>`; }
+  // Real, official Azure service icons (linked from a public CDN, not redistributed).
+  const AZURE_CDN = "https://cdn.jsdelivr.net/gh/benc-uk/icon-collection@master/azure-icons/";
+  const AZURE = {
+    appservice: "App-Services.svg",
+    functions: "Function-Apps.svg",
+    aks: "Kubernetes-Services.svg",
+    containerapps: "Container-Instances.svg",
+    vm: "Virtual-Machine.svg",
+    vmss: "VM-Scale-Sets.svg",
+    vnet: "Virtual-Networks.svg",
+    loadbalancer: "Load-Balancers.svg",
+    appgateway: "Application-Gateways.svg",
+    frontdoor: "Front-Doors.svg",
+    firewall: "Firewalls.svg",
+    dns: "DNS-Zones.svg",
+    privatelink: "Private-Link.svg",
+    cdn: "CDN-Profiles.svg",
+    sql: "SQL-Database.svg",
+    cosmos: "Azure-Cosmos-DB.svg",
+    storage: "Storage-Accounts.svg",
+    blob: "Storage-Container.svg",
+    redis: "Cache-Redis.svg",
+    datafactory: "Data-Factory.svg",
+    synapse: "Azure-Synapse-Analytics.svg",
+    apim: "API-Management-Services.svg",
+    servicebus: "Service-Bus.svg",
+    eventgrid: "Event-Grid-Topics.svg",
+    eventhubs: "Event-Hubs.svg",
+    logicapps: "Logic-Apps.svg",
+    keyvault: "Key-Vaults.svg",
+    entra: "Azure-Active-Directory.svg",
+    defender: "Security-Center.svg",
+    openai: "Cognitive-Services.svg",
+    aisearch: "Search-Services.svg",
+    aifoundry: "Cognitive-Services.svg",
+    monitor: "Monitor.svg",
+    loganalytics: "Log-Analytics-Workspaces.svg",
+    appinsights: "Application-Insights.svg",
+    kubernetes: "Kubernetes-Services.svg",
+    resourcegroup: "Resource-Groups.svg",
+    subscription: "Subscriptions.svg"
+  };
+  function azureUrl(key) { return AZURE[key] ? AZURE_CDN + AZURE[key] : null; }
 
-  return { get, inner, svg, has: (key) => Object.prototype.hasOwnProperty.call(ICONS, key) };
+  function get(key) { return ICONS[key] || FALLBACK; }
+  function inner(key) {
+    const url = azureUrl(key);
+    if (url) return `<image href="${url}" x="0" y="0" width="32" height="32"/>`;
+    const icon = get(key);
+    return `<rect width="32" height="32" rx="7" fill="${icon.c}"/>${icon.s}`;
+  }
+  function svg(key, size) {
+    const url = azureUrl(key);
+    if (url) return `<img class="arch-icon-img" src="${url}" width="${size}" height="${size}" alt="" loading="lazy">`;
+    return `<svg viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true" focusable="false">${inner(key)}</svg>`;
+  }
+
+  return { get, inner, svg, has: (key) => Object.prototype.hasOwnProperty.call(ICONS, key) || Object.prototype.hasOwnProperty.call(AZURE, key) };
 })();
