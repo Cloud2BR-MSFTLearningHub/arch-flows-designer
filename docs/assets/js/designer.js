@@ -80,6 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedId = null;
   let connectingFrom = null;
   let drag = null;
+  const NODE_W = 108;
+  const NODE_H = 78;
 
   function uid() { return `node-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
   function nodeById(id) { return diagram.nodes.find((node) => node.id === id); }
@@ -126,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
       element.dataset.nodeId = node.id;
       element.style.left = `${node.x}px`;
       element.style.top = `${node.y}px`;
-      element.innerHTML = `<div class="node-top"><span class="node-icon">${window.ArchIcons.svg(node.icon, 26)}</span><span class="node-label">${escapeHtml(node.label)}</span></div><div class="node-meta">${escapeHtml(node.environment)}</div>`;
+      element.innerHTML = `<span class="node-icon">${window.ArchIcons.svg(node.icon, 34)}</span><span class="node-label">${escapeHtml(node.label)}</span>`;
       element.addEventListener("pointerdown", beginDrag);
       element.addEventListener("click", selectNode);
       stage.append(element);
@@ -144,10 +146,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const source = nodeById(edge.from);
       const target = nodeById(edge.to);
       if (!source || !target) return;
-      const startX = source.x + 142;
-      const startY = source.y + 32;
+      const startX = source.x + NODE_W;
+      const startY = source.y + NODE_H / 2;
       const endX = target.x;
-      const endY = target.y + 32;
+      const endY = target.y + NODE_H / 2;
       const bend = Math.max(35, Math.abs(endX - startX) / 2);
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`);
@@ -240,8 +242,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.querySelector("#export-svg").addEventListener("click", () => {
     const width = Math.max(stage.clientWidth, 800); const height = Math.max(stage.clientHeight, 540);
-    const edges = diagram.edges.map((edge) => { const a = nodeById(edge.from); const b = nodeById(edge.to); return a && b ? `<path d="M ${a.x + 142} ${a.y + 32} C ${a.x + 185} ${a.y + 32}, ${b.x - 43} ${b.y + 32}, ${b.x} ${b.y + 32}" fill="none" stroke="#2a6b9d" stroke-width="2"/>` : ""; }).join("");
-    const nodes = diagram.nodes.map((node) => `<g transform="translate(${node.x},${node.y})"><rect width="142" height="65" rx="5" fill="#fff" stroke="#8badc6"/><svg x="8" y="9" width="26" height="26" viewBox="0 0 32 32">${window.ArchIcons.inner(node.icon)}</svg><text x="42" y="24" font-family="Arial" font-size="11" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text><text x="42" y="50" font-family="Arial" font-size="8" fill="#688099">${escapeHtml(node.environment.toUpperCase())}</text></g>`).join("");
+    const edges = diagram.edges.map((edge) => { const a = nodeById(edge.from); const b = nodeById(edge.to); return a && b ? `<path d="M ${a.x + NODE_W} ${a.y + NODE_H / 2} C ${a.x + NODE_W + 40} ${a.y + NODE_H / 2}, ${b.x - 40} ${b.y + NODE_H / 2}, ${b.x} ${b.y + NODE_H / 2}" fill="none" stroke="#2a6b9d" stroke-width="2"/>` : ""; }).join("");
+    const nodes = diagram.nodes.map((node) => `<g transform="translate(${node.x},${node.y})"><rect width="${NODE_W}" height="${NODE_H}" rx="6" fill="#fff" stroke="#8badc6"/><svg x="${(NODE_W - 34) / 2}" y="8" width="34" height="34" viewBox="0 0 32 32">${window.ArchIcons.inner(node.icon)}</svg><text x="${NODE_W / 2}" y="58" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#142b42">${escapeHtml(node.label)}</text></g>`).join("");
     download("arch-flow-diagram.svg", `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#f8fbfd"/>${edges}${nodes}</svg>`, "image/svg+xml"); status.textContent = "SVG exported";
   });
   document.querySelector("#clear-diagram").addEventListener("click", () => { diagram = { version: 1, nodes: [], edges: [] }; selectedId = null; connectingFrom = null; markDirty("Canvas cleared"); render(); });
