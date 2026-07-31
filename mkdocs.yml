@@ -1,9 +1,8 @@
-# Update site_name, site_url, repo_url, and repo_name for each new repository.
-site_name: Documentation Hub
-site_description: Overview and setup documentation for this project.
-site_url: https://cloud2br-msftlearninghub.github.io/org-repo-template/
-repo_url: https://github.com/Cloud2BR-MSFTLearningHub/org-repo-template
-repo_name: Cloud2BR-MSFTLearningHub/org-repo-template
+site_name: Arch Flows Designer
+site_description: Draw Azure cloud architecture diagrams, service flows, and infrastructure topologies in the browser.
+site_url: https://cloud2br-msftlearninghub.github.io/arch-flows-designer/
+repo_url: https://github.com/Cloud2BR-MSFTLearningHub/arch-flows-designer
+repo_name: Cloud2BR-MSFTLearningHub/arch-flows-designer
 docs_dir: docs
 site_dir: site
 copyright: Copyright &copy; 2026 <a href="https://github.com/Cloud2BR-MSFTLearningHub" target="_blank" rel="noopener">Cloud2BR OSS - Learning Hub</a>
@@ -37,6 +36,7 @@ extra_css:
 extra_javascript:
   - assets/js/logo-link.js
   - assets/js/external-links.js
+  - assets/js/designer.js
 extra:
   generator: false
   social:
@@ -44,5 +44,5 @@ extra:
       link: https://github.com/Cloud2BR-MSFTLearningHub
       name: Cloud2BR OSS - Learning Hub
 nav:
-  - Home: index.md
-  - Overview: overview.md
+  - Designer: index.md
+  - About: overview.md

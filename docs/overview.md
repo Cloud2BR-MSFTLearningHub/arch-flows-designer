@@ -1,39 +1,33 @@
-# Overview
+# About Arch Flows Designer
 
 Atlanta, USA
 
 [![GitHub](https://img.shields.io/badge/--181717?logo=github&logoColor=ffffff)](https://github.com/)
 [Cloud2BR OSS - Learning Hub](https://github.com/Cloud2BR-MSFTLearningHub)
 
-Last updated: 2026-07-27
+Last updated: 2026-07-31
 
 ----------
 
-<details markdown>
-<summary>List of references</summary>
+Arch Flows Designer is a browser-based canvas for exploring Azure cloud
+architectures, service flows, and infrastructure topologies. It is designed for
+quick solution conversations, technical learning, and documentation drafts.
 
-- Add authoritative references here as links.
+## What you can do
 
-</details>
+- Add Azure compute, integration, data, security, and general infrastructure assets.
+- Drag assets across the canvas and edit their labels, environments, and notes.
+- Connect assets to show system flow and arrange a diagram into a simple grid.
+- Save a portable JSON file, reload it later, or export an SVG for documentation.
 
-Replace this starter page with your project's overview. Use the standard sections
-below as a starting structure, and keep the header block at the top so the page
-passes the organization's Markdown header validation.
+## Diagram files
 
-## Why it matters
+The editor uses a small JSON model containing a `nodes` array and an `edges`
+array. Diagram files remain entirely in the browser unless you explicitly save
+or share them.
 
-Explain the problem this project addresses and who benefits.
+## Notes
 
-## How it works
-
-Describe the main components and how they fit together.
-
-## Get started
-
-1. Define the outcome, owner, and scope.
-2. Pilot in a limited scope and validate the result.
-3. Document the change, approval, and rollback before expanding.
-
-## Business example
-
-> Replace this quote with a short, concrete scenario that shows the project in use.
+This project is an educational sandbox. Validate cloud service configuration,
+security controls, pricing, and support status against official Microsoft
+documentation before using a diagram as a production design.
