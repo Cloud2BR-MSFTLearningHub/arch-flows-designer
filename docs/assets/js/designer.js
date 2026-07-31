@@ -297,11 +297,78 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   document.querySelector("#save-diagram").addEventListener("click", () => { download("arch-flow-diagram.json", JSON.stringify(diagram, null, 2), "application/json"); status.textContent = "JSON saved"; });
   document.querySelector("#load-diagram").addEventListener("click", () => document.querySelector("#load-input").click());
-  document.querySelector("#load-input").addEventListener("change", (event) => {
-    const file = event.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { try { const next = JSON.parse(reader.result); if (!Array.isArray(next.nodes) || !Array.isArray(next.edges)) throw new Error(); diagram = next; selectedId = null; markDirty("Diagram loaded"); render(); } catch { status.textContent = "Invalid diagram file"; } };
-    reader.readAsText(file);
+  function iconForDrawioCell(label, style) {
+    const source = `${label} ${style}`.toLowerCase();
+    const matchedAsset = assets.find((asset) => source.includes(asset.name.toLowerCase()));
+    if (matchedAsset) return matchedAsset.icon;
+    const keywords = [["kubernetes", "aks"], ["function", "functions"], ["virtualmachine", "vm"], ["database", "database"], ["server", "server"], ["cloud", "internet"], ["user", "user"]];
+    const matchedKeyword = keywords.find(([keyword]) => source.includes(keyword));
+    return matchedKeyword ? matchedKeyword[1] : "external";
+  }
+  function cellLabel(cell) {
+    const wrapper = cell.parentElement?.tagName === "object" ? cell.parentElement : null;
+    const raw = wrapper?.getAttribute("label") || cell.getAttribute("value") || "Untitled asset";
+    const holder = document.createElement("div");
+    holder.innerHTML = raw.replace(/<br\s*\/?>/gi, " ");
+    return (holder.textContent || "Untitled asset").trim().slice(0, 42);
+  }
+  async function inflateDrawio(content) {
+    const encoded = decodeURIComponent(content.trim());
+    const binary = atob(encoded.replace(/-/g, "+").replace(/_/g, "/"));
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    if (!window.DecompressionStream) throw new Error("Compressed draw.io files are not supported in this browser.");
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+    return new Response(stream).text();
+  }
+  async function drawioDocumentXml(content) {
+    const parsed = new DOMParser().parseFromString(content, "text/xml");
+    const diagramElement = parsed.querySelector("mxfile > diagram");
+    if (!diagramElement) return content;
+    const embeddedGraph = diagramElement.querySelector("mxGraphModel");
+    return embeddedGraph ? embeddedGraph.outerHTML : inflateDrawio(diagramElement.textContent);
+  }
+  async function parseDrawioDiagram(content) {
+    const xml = await drawioDocumentXml(content);
+    const documentXml = new DOMParser().parseFromString(xml, "text/xml");
+    if (documentXml.querySelector("parsererror")) throw new Error("Invalid draw.io XML");
+    const cells = [...documentXml.querySelectorAll("mxCell")];
+    const importedNodes = [];
+    const idMap = new Map();
+    cells.filter((cell) => cell.getAttribute("vertex") === "1").forEach((cell) => {
+      const geometry = cell.querySelector(":scope > mxGeometry");
+      if (!geometry) return;
+      const label = cellLabel(cell);
+      const style = cell.getAttribute("style") || "";
+      const node = {
+        id: uid(), label, type: "Imported", icon: iconForDrawioCell(label, style), environment: "Production", notes: "Imported from draw.io",
+        x: Math.max(8, Number(geometry.getAttribute("x")) || 40), y: Math.max(8, Number(geometry.getAttribute("y")) || 40)
+      };
+      importedNodes.push(node);
+      idMap.set(cell.getAttribute("id"), node.id);
+    });
+    const importedEdges = cells.filter((cell) => cell.getAttribute("edge") === "1").map((cell) => ({
+      id: uid(), from: idMap.get(cell.getAttribute("source")), to: idMap.get(cell.getAttribute("target"))
+    })).filter((edge) => edge.from && edge.to);
+    if (!importedNodes.length) throw new Error("No diagram assets were found");
+    return { version: 1, nodes: importedNodes, edges: importedEdges };
+  }
+  document.querySelector("#load-input").addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const content = await file.text();
+      const isNative = file.name.toLowerCase().endsWith(".json") || content.trim().startsWith("{");
+      const next = isNative ? JSON.parse(content) : await parseDrawioDiagram(content);
+      if (!Array.isArray(next.nodes) || !Array.isArray(next.edges)) throw new Error("Unsupported diagram structure");
+      diagram = next;
+      selectedId = null;
+      connectingFrom = null;
+      markDirty(isNative ? "JSON diagram loaded" : "draw.io diagram imported");
+      render();
+    } catch (error) {
+      status.textContent = error.message || "Unable to import this diagram";
+    }
   });
   document.querySelector("#export-svg").addEventListener("click", () => {
     const width = Math.max(stage.clientWidth, 800); const height = Math.max(stage.clientHeight, 540);

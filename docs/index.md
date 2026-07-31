@@ -16,8 +16,8 @@ Last updated: 2026-07-31
       <button class="tool-button" type="button" id="auto-layout">Arrange</button>
       <button class="tool-button" type="button" id="export-svg">Export SVG</button>
       <button class="tool-button" type="button" id="save-diagram">Save JSON</button>
-      <button class="tool-button" type="button" id="load-diagram">Open JSON</button>
-      <input id="load-input" type="file" accept="application/json" hidden>
+      <button class="tool-button" type="button" id="load-diagram">Open diagram</button>
+      <input id="load-input" type="file" accept="application/json,.json,.drawio,.dio,.xml,text/xml,application/xml" hidden>
       <button class="tool-button tool-button--danger" type="button" id="clear-diagram">Clear</button>
     </div>
   </section>
